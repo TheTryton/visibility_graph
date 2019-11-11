@@ -4,9 +4,9 @@ project(visualization)
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
 file(GLOB_RECURSE visualization_sources 
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp" 
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.inl" 
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.inl" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${visualization_sources})
