@@ -14,26 +14,25 @@ public:
 
     class edge final
     {
+        friend class graph<V, E>;
         friend class vertex;
     private:
         E _data;
-        vertex& _from;
-        vertex& _to;
+        size_t _from;
+        size_t _to;
     private:
-        edge(vertex& from, vertex& to) : _from(from), _to(to) {}
+        edge(size_t from, size_t to) : _from(from), _to(to) {}
         template<class EO>
-        edge(vertex& from, vertex& to, EO&& data) : _data(std::forward<EO>(data)), _from(from), _to(to) {}
+        edge(size_t from, size_t to, EO&& data) : _data(std::forward<EO>(data)), _from(from), _to(to) {}
     public:
-        vertex& from() { return _from; }
-        const vertex& from() const { return _from; }
-        vertex& to() { return _to; }
-        const vertex& to() const { return _to; }
+        size_t from() const { return _from; }
+        size_t to() const { return _to; }
         const E& data() const { return _data; }
         E& data() { return _data; }
     public:
         bool operator==(const edge& other);
         bool operator!=(const edge& other);
-    }
+    };
 
     class vertex final
     {
@@ -102,7 +101,7 @@ public:
         std::transform(vids.begin(), vids.end(), std::back_inserter(_vertices), [](size_t i) {return vertex(i); });
     }
     template<class It>
-    graph(size_t vertices_count = 0, It data_it)
+    graph(size_t vertices_count, It data_it)
     {
         size_t i = 0;
         for (size_i = 0; i < vertices_count; i++)
@@ -168,17 +167,30 @@ public:
         remove_undirected_edge(e.from(), e.to());
     }
 public:
-    vector<vertex>& vertices() { return _vertices; }
-    const vector<vertex>& vertices() { return _vertices; }
+    std::vector<vertex>& vertices() { return _vertices; }
+    const std::vector<vertex>& vertices() const { return _vertices; }
 public:
     size_t size() const { return _vertices.size(); };
 };
+
+template<class V, class E>
+inline bool graph<V, E>::edge::operator==(const edge& other)
+{
+    return from() == other.from() && to() == other.to();
+}
+
+template<class V, class E>
+inline bool graph<V, E>::edge::operator!=(const edge& other)
+{
+    return from() != other.from() || to() != other.to();
+}
+
 
 struct empty {};
 
 template<class V>
 using visibility_graph = graph<V, empty>;
-
+/*
 template<class V>
 bool visible(size_t i, const V& p, const V& w, const V& wm1, bool wm1vis, const std::set<edge>& ordered_intersections)
 {
@@ -321,3 +333,4 @@ auto create_visibility_graph(const std::vector<P>& polygons)
 
     return vgraph;
 }
+*/
