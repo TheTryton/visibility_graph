@@ -226,14 +226,8 @@ bool point_in_triangle(QPointF pt, QPointF v1, QPointF v2, QPointF v3)
     return !(has_neg && has_pos);
 }
 
-enum class side_of_line
-{
-    left,
-    on,
-    right
-};
 
-side_of_line get_side_of_line(const QLineF& line, const QPointF& point)
+side_of_line get_sol(const QLineF& line, const QPointF& point)
 {
     auto& a = line.p1();
     auto& b = line.p2();
@@ -267,11 +261,11 @@ std::list<QPointF> quick_hull(const QLineF& division_line, const std::vector<QPo
 
     for (auto& p : points_subset)
     {
-        if (get_side_of_line(line1, p) == side_of_line::left)
+        if (get_sol(line1, p) == side_of_line::left)
         {
             left_to_line1.push_back(p);
         }
-        else if (get_side_of_line(line2, p) == side_of_line::left)
+        else if (get_sol(line2, p) == side_of_line::left)
         {
             left_to_line2.push_back(p);
         }
@@ -298,7 +292,7 @@ QPolygonF quick_hull(const std::vector<QPointF>& points)
     points_up.reserve(points.size());
     for (auto& p : points)
     {
-        auto side = get_side_of_line(line_up, p);
+        auto side = get_sol(line_up, p);
 
         if (side == side_of_line::left)
         {
@@ -337,7 +331,7 @@ QPolygonF monotone_chain(const std::vector<QPointF>& points)
 
     std::for_each(sorted_points.begin(), sorted_points.end(), [&](const QPointF& p)
         {
-            while (k >= 2 && get_side_of_line(QLineF(H[k - 2], H[k - 1]), p) == side_of_line::left) k--;
+            while (k >= 2 && get_sol(QLineF(H[k - 2], H[k - 1]), p) == side_of_line::left) k--;
             H[k++] = p;
         }
     );
@@ -346,7 +340,7 @@ QPolygonF monotone_chain(const std::vector<QPointF>& points)
 
     std::for_each(++sorted_points.rbegin(), sorted_points.rend(), [&](const QPointF& p)
         {
-            while (k >= t && get_side_of_line(QLineF(H[k - 2], H[k - 1]), p) == side_of_line::left) k--;
+            while (k >= t && get_sol(QLineF(H[k - 2], H[k - 1]), p) == side_of_line::left) k--;
             H[k++] = p;
         }
     );
@@ -545,7 +539,32 @@ std::vector<QPointF> generate_range(const QRectF& range, size_t count)
 
 int main(int argc, char** argv)
 {
-    auto test_set = generate_range(QRectF(100, 100, 200, 200), 100000000);
+    std::vector<polygon<float>> obstacles;
+
+    obstacles.push_back(
+        polygon<float>(
+            {
+                point<float,2>({0,0}),
+                point<float,2>({0,1}),
+                point<float,2>({1,1}),
+                point<float,2>({0,1})
+            }
+        )
+    );
+
+    obstacles.push_back(
+        polygon<float>(
+            {
+                point<float,2>({2,2}),
+                point<float,2>({2,4}),
+                point<float,2>({4,2}),
+            }
+            )
+    );
+
+    auto vg = compute_visibility_graph(obstacles);
+
+    auto test_set = generate_range(QRectF(100, 100, 200, 200), 1000);
 
     {
         auto s = std::chrono::high_resolution_clock::now();
