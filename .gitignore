@@ -1,0 +1,9 @@
+.gitignore\
+.vs/
+.git/
+Debug/
+x64/
+visibility_graph.sln
+visibility_graph.vcxproj
+visibility_graph.vcxproj.filters
+visibility_graph.vcxproj.user

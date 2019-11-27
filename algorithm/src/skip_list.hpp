@@ -5,8 +5,43 @@
 #include <functional>
 #include <exception>
 #define MAX_H 20
-namespace data_structures {
 
+namespace data_structures {
+	
+	
+	//AH ten double-dispatch, jak masz pomysł jak to obejść to pisz
+	
+	class floating
+	{
+	protected:
+		float val;
+	public:
+		floating(float a) : val(a) {}
+		floating() {}
+		static floating min_value;
+		static floating max_value;
+		
+		bool operator< (const floating& a)
+		{
+			return this->val < a.val;
+		}
+		
+		bool operator== (const floating& a)
+		{
+			return abs(this->val - a.val) < 0.00000001;
+		
+		}
+		
+	};
+
+	
+	
+
+
+	
+
+	floating floating::max_value=floating(1000000000);
+	floating floating::min_value = floating(-100000000);
 
 /*
 ███████╗██╗  ██╗██╗██████╗ ██╗     ██╗███████╗████████╗
@@ -27,27 +62,43 @@ namespace data_structures {
         template<class T, class K, int MAX_HEIGHT = MAX_H>
         class skip_list
         {
-
                 public:
                         class node
-                                        {
-                                                friend skip_list<T, K, MAX_HEIGHT>;
+                        {
+                        friend skip_list<T, K, MAX_HEIGHT>;
 
-                                                private:
-                                                        size_t height;
-                                                        std::vector<std::shared_ptr<node>> neighbours;
-                                                        T& value;
+                        private:
+                                T value;
+					    protected:
+								skip_list<T, K, MAX_HEIGHT>& outer;
+								size_t height;
+								std::vector<std::shared_ptr<node>> neighbours;
+                         public:
+								node(skip_list<T, K, MAX_HEIGHT>& outer);
+                                node(skip_list<T, K, MAX_HEIGHT>& outer, const T& value);
+                                node(skip_list<T, K, MAX_HEIGHT>&outer, size_t height,const T& value);
+                                virtual ~node();
+                                virtual K get_key();
+						};
 
-                                                public:
-                                                        node(T& value);
-                                                        node(size_t height, T& value);
-                                                        ~node();
-                                                        K get_key();
-                                        };
+					
+						class guard_node:public node
+						{
+						private:
+							K key;
+						public:
+							guard_node(skip_list<T, K, MAX_HEIGHT>& outer, const K& key);
+							guard_node(skip_list<T, K, MAX_HEIGHT>&outer, K&& key);
+							virtual K get_key() override;
+							~guard_node();
+
+						};
+
 
                 typedef std::shared_ptr<node> ptr;
 
                 private:
+						size_t size;
                         std::shared_ptr<node> beginning;
                         std::function<K(T)> get_key_function;
                         static size_t get_random_height();
@@ -56,7 +107,7 @@ namespace data_structures {
                 public:
                         skip_list(std::function<K(const T&)> get_key_function);
                         ~skip_list();
-                        void insert(T& element);
+                        void insert(const T& element);
                         void insert(T&& element);
                         std::pair<bool, T> get_element(const K& key);
                         std::pair<bool, T> get_element(K&& key);
@@ -65,9 +116,12 @@ namespace data_structures {
                         T& find_no_greater_than(const K& key);
                         void remove(const K& key);
                         void remove(K&& key);
-                        void print();
+                        void print(size_t from_max_level = MAX_HEIGHT);
+						size_t get_size();
 
         };
+
+
 /*
 ███╗   ██╗ ██████╗ ██████╗ ███████╗     ██████╗██╗      █████╗ ███████╗███████╗
 ████╗  ██║██╔═══██╗██╔══██╗██╔════╝    ██╔════╝██║     ██╔══██╗██╔════╝██╔════╝
@@ -85,28 +139,78 @@ namespace data_structures {
  */
 
         template<class T, class K, int MAX_HEIGHT>
-        inline skip_list<T, K, MAX_HEIGHT>::node::node(T & value):value(value), height(get_random_height())
+        inline skip_list<T, K, MAX_HEIGHT>::node::node(skip_list<T, K, MAX_HEIGHT>& outer, const T & value):value(value), height(get_random_height()), outer(outer)
         {
                 neighbours = std::vector<ptr>(height + 1, nullptr);
         }
 
         template<class T, class K, int MAX_HEIGHT>
-        inline skip_list<T, K, MAX_HEIGHT>::node::node(size_t height, T & value) : value(value), height(height)
+        inline skip_list<T, K, MAX_HEIGHT>::node::node(skip_list<T, K, MAX_HEIGHT>& outer, size_t height, const T & value) : value(value), height(height), outer(outer)
         {
                 neighbours = std::vector<ptr>(height + 1, nullptr);
         }
 
-        template<class T, class K, int MAX_HEIGHT>
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline data_structures::skip_list<T, K, MAX_HEIGHT>::node::node(skip_list<T, K, MAX_HEIGHT>& outer):outer(outer), height(MAX_HEIGHT)
+		{
+			neighbours = std::vector<ptr>(height + 1, nullptr);
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
         inline skip_list<T, K, MAX_HEIGHT>::node::~node()
         {
                 this->neighbours.clear();
         }
 
         template<class T, class K, int MAX_HEIGHT>
-        inline K data_structures::skip_list<T, K, MAX_HEIGHT>::node::get_key()
+        inline K skip_list<T, K, MAX_HEIGHT>::node::get_key()
         {
-                return get_key_function(this->value);
+                return outer.get_key_function(this->value);
         }
+
+// ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗                                  
+//██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔══██╗██╔════╝                                  
+//██║  ███╗██║   ██║███████║██████╔╝██║  ██║    ██╔██╗ ██║██║   ██║██║  ██║█████╗                                    
+//██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║    ██║╚██╗██║██║   ██║██║  ██║██╔══╝                                    
+//╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝    ██║ ╚████║╚██████╔╝██████╔╝███████╗                                  
+// ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝                                  
+//                                                                                                                   
+//██╗███╗   ███╗██████╗ ██╗     ███████╗███╗   ███╗███████╗███╗   ██╗████████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+//██║████╗ ████║██╔══██╗██║     ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+//██║██╔████╔██║██████╔╝██║     █████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ███████║   ██║   ██║██║   ██║██╔██╗ ██║
+//██║██║╚██╔╝██║██╔═══╝ ██║     ██╔══╝  ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+//██║██║ ╚═╝ ██║██║     ███████╗███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+//╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                                                                                                                   
+
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline skip_list<T, K, MAX_HEIGHT>::guard_node::guard_node(skip_list<T, K, MAX_HEIGHT>& outer, const K& key):node(outer), key(key)
+		{
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline skip_list<T, K, MAX_HEIGHT>::guard_node::guard_node(skip_list<T, K, MAX_HEIGHT>& outer, K&& key) :node(outer), key(key)
+		{
+
+		}
+
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline skip_list<T, K, MAX_HEIGHT>::guard_node::~guard_node()
+		{
+			
+		}
+
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline K skip_list<T, K, MAX_HEIGHT>::guard_node::get_key()
+		{
+			return this->key;
+		}
+
+
 /*
 ███████╗██╗  ██╗██╗██████╗ ██╗     ██╗███████╗████████╗
 ██╔════╝██║ ██╔╝██║██╔══██╗██║     ██║██╔════╝╚══██╔══╝
@@ -131,15 +235,15 @@ namespace data_structures {
                         std::random_device rd;
                         std::mt19937 gen(rd());
                         std::uniform_int_distribution<> dis(0, 1);
-                        while (dis(gen) == 1 and height < MAX_HEIGHT)height++;
+                        while ( (dis(gen) == 1) && (height < MAX_HEIGHT)) height++;
 
                         return height;
         }
 
-        template<class t, class k, int max_height>
-        inline std::shared_ptr<typename skip_list<t, k, max_height>::node> skip_list<t, k, max_height>::get_preceeding(k&& key)
+        template<class T, class K, int max_height>
+        inline std::shared_ptr<typename skip_list<T, K, max_height>::node> skip_list<T, K, max_height>::get_preceeding(K&& key)
         {
-                std::unique_ptr<typename skip_list<t, k, max_height>::node> prev = this->beginning;
+                std::unique_ptr<typename skip_list<T, K, max_height>::node> prev = this->beginning;
                 int level = prev->height;
                 ptr current;
                 while (level >= 0)
@@ -157,8 +261,8 @@ namespace data_structures {
                 return current;
         }
 
-        template<class t, class k, int max_height>
-        inline std::shared_ptr<typename skip_list<t, k, max_height>::node > skip_list<t, k, max_height>::get_preceeding(const k & key)
+        template<class T, class K, int max_height>
+        inline std::shared_ptr<typename skip_list<T, K, max_height>::node > skip_list<T, K, max_height>::get_preceeding(const K & key)
         {
                 ptr prev = this->beginning;
                 int level = prev->height;
@@ -183,13 +287,14 @@ namespace data_structures {
         template<class T, class K, int MAX_HEIGHT>
         inline skip_list<T, K, MAX_HEIGHT>::skip_list(std::function<K(const T&)> get_key_function) :get_key_function(get_key_function)
         {
-                ptr min_guard = ptr(new node(MAX_HEIGHT, K::min_value));
-                ptr max_guard = ptr(new node(MAX_HEIGHT, K::max_value));
+				ptr min_guard = std::shared_ptr<guard_node>(new guard_node(*this, K::min_value));
+                ptr max_guard = std::shared_ptr<guard_node>(new guard_node(*this, K::max_value));
                 this->beginning = min_guard;
                 for (size_t i = 0; i <= MAX_HEIGHT; i++)
                 {
                         min_guard->neighbours[i] = max_guard;
                 }
+				size = 0;
         }
 
 
@@ -207,10 +312,10 @@ namespace data_structures {
 
 
         template<class T, class K, int MAX_HEIGHT>
-        inline void skip_list<T, K, MAX_HEIGHT>::insert(T& element)
+        inline void skip_list<T, K, MAX_HEIGHT>::insert(const T& element)
         {
                 K key = get_key_function(element);
-                ptr new_node = ptr( new node(element) );
+                ptr new_node = ptr( new node(*this, element) );
                 int level = new_node->height;
                 ptr current = this->beginning;
                 ptr next;
@@ -218,7 +323,7 @@ namespace data_structures {
                 {
                         next = current->neighbours[level];
 
-                        while (get_key_function(next->value) < key)
+                        while (next->get_key() < key)
                         {
                                 current = next;
                                 next = next->neighbours[level];
@@ -227,6 +332,7 @@ namespace data_structures {
                         new_node->neighbours[level] = next;
                         level--;
                 }
+				size++;
         }
 
 
@@ -242,7 +348,7 @@ namespace data_structures {
                 {
                         next = current->neighbours[level];
 
-                        while (get_key_function(next->value) < key)
+                        while (key< next->get_key())
                         {
                                 current = next;
                                 next = next->neighbours[level];
@@ -251,6 +357,7 @@ namespace data_structures {
                         new_node->neighbours[level] = next;
                         level--;
                 }
+				size++;
         }
 
 
@@ -279,16 +386,18 @@ namespace data_structures {
                 ptr current = this->beginning;
                 int level = current->height;
                 ptr next = current->neighbours[level];
+				bool is_being_deleted = false;
                 while (level >= 0)
                 {
 
-                        while (get_key_function(next->value) < key)
+                        while (next->get_key() < key)
                         {
                                 current = next;
                                 next = next->neighbours[level];
                         }
-                        if (get_key_function(next->value) == key)
+                        if (next->get_key() == key)
                         {
+								is_being_deleted = true;
                                 current->neighbours[level] = next->neighbours[level];
                                 next = current;
                                 level--;
@@ -299,6 +408,7 @@ namespace data_structures {
                                 next = current->neighbours[level];
                         }
                 }
+				if (is_being_deleted)size--;
         }
 
 
@@ -308,16 +418,18 @@ namespace data_structures {
                 ptr current = this->beginning;
                 int level = current->height;
                 ptr next = current->neighbours[level];
+				bool is_being_deleted = false;
                 while (level >= 0)
                 {
 
-                        while (get_key_function(next->value) < key)
+                        while (next->get_key() < key)
                         {
                                 current = next;
                                 next = next->neighbours[level];
                         }
-                        if (get_key_function(next->value) == key)
+                        if (next->get_key() == key)
                         {
+								is_being_deleted = true;
                                 current->neighbours[level] = next->neighbours[level];
                                 next = current;
                                 level--;
@@ -329,11 +441,12 @@ namespace data_structures {
                         }
 
                 }
+				if (is_being_deleted)size--;
 
         }
 
         template<class T, class K, int MAX_HEIGHT>
-        inline void skip_list<T, K, MAX_HEIGHT>::print(size_t from_level=MAX_HEIGHT)
+        inline void skip_list<T, K, MAX_HEIGHT>::print(size_t from_level)
         {
                 for (int level = from_level; level >= 0; level--)
                 {
@@ -351,5 +464,14 @@ namespace data_structures {
                         std::cout << std::endl;
                 }
         }
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline size_t skip_list<T, K, MAX_HEIGHT>::get_size()
+		{
+			return this->size;
+		}
+
+
+	
 
 }

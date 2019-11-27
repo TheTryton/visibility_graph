@@ -1,4 +1,4 @@
-#include <geometric_algorithm/model/step/collection/collection_element/point/point_element.hpp>
+#include "point_element.hpp"
 
 point_element::point_element(const QPoint& point, const QColor& color, point_marker marker, float radius) :
     _point(point),

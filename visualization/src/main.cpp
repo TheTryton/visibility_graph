@@ -1,11 +1,12 @@
 #include <QtWidgets>
-#include <visibility_graph.hpp>
+#include "visibility_graph.hpp"
 #include <optional>
 #include <numeric>
 #include <iostream>
 #include <stack>
 #include <chrono>
-
+#include <random>
+#include "skip_list.hpp"
 std::optional<QPointF> intersect_line_line(const QLineF& line1, const QLineF& line2)
 {
     auto p2p1 = line2.p1() - line1.p1();
@@ -226,7 +227,7 @@ bool point_in_triangle(QPointF pt, QPointF v1, QPointF v2, QPointF v3)
     return !(has_neg && has_pos);
 }
 
-enum class side_of_line
+enum class another_side_of_line
 {
     left,
     on,
@@ -542,74 +543,86 @@ std::vector<QPointF> generate_range(const QRectF& range, size_t count)
 
     return points;
 }
+using namespace data_structures;
+
+
+
 
 int main(int argc, char** argv)
 {
-    auto test_set = generate_range(QRectF(100, 100, 200, 200), 100000000);
+	/*
+	QApplication application(argc, argv);
 
-    {
-        auto s = std::chrono::high_resolution_clock::now();
-        auto result = quick_hull(test_set);
-        auto e = std::chrono::high_resolution_clock::now();
-        std::cout << "quick_hull" << std::endl;
-        std::cout << (e - s).count() / 1e9 << "s" << std::endl;
-        std::cout << result[0].x() << std::endl;
-    }
+	std::vector<QPolygonF> polygons =
+	{
+		 QPolygonF(
+					{
+						QPointF(50,50),
+						QPointF(100,50),
+						QPointF(50,100)
+					}
+				),
+				QPolygonF(
+					{
+						QPointF(200,200),
+						QPointF(250,200),
+						QPointF(200,250)
+					}
+				),
+				QPolygonF(
+					{
+						QPointF(320,100),
+						QPointF(420,150),
+						QPointF(440,230),
+						QPointF(340,200),
+						QPointF(340,210),
+						QPointF(340,-200),
+						QPointF(312,700),
+						QPointF(-41,400)
+					}
+				),
+				circle(QPointF(100,300), 25),
+				star(QPointF(200,300), 25)
+	};
 
-    {
-        auto s = std::chrono::high_resolution_clock::now();
-        auto result = monotone_chain(test_set);
-        auto e = std::chrono::high_resolution_clock::now();
-        std::cout << "monotone_chain" << std::endl;
-        std::cout << (e - s).count() / 1e9 << "s" << std::endl;
-        std::cout << result[0].x() << std::endl;
-    }
+	visualize v1(
+		construct_visibility_graph(
+			polygons
+		),
+		polygons
+	);
+	v1.show();
+	application.exec();
+	*/
 
 
-    std::cin.get();
-    QApplication application(argc, argv);
 
-    std::vector<QPolygonF> polygons =
-    {
-         QPolygonF(
-                    {
-                        QPointF(50,50),
-                        QPointF(100,50),
-                        QPointF(50,100)
-                    }
-                ),
-                QPolygonF(
-                    {
-                        QPointF(200,200),
-                        QPointF(250,200),
-                        QPointF(200,250)
-                    }
-                ),
-                QPolygonF(
-                    {
-                        QPointF(320,100),
-                        QPointF(420,150),
-                        QPointF(440,230),
-                        QPointF(340,200)
-                    }
-                ),
-                circle(QPointF(100,300), 25),
-                star(QPointF(200,300), 25)
-    };
 
-    /*visualize v1(
-        construct_visibility_graph(
-            polygons
-        ),
-        polygons
-    );
+	segment<float, 2> seg;
+	skip_list<obstacle_edge<float>, floating> list(
+		[](const obstacle_edge<float>& x) {return floating(x.dist_to_p);  }	
+	);
+	
 
-    v1.show();*/
+	obstacle_edge<float> edge;
+	edge.dist_to_p = 12.0;
+	auto p1 = point<float, 2>({ 1.1, 2.0 });
+	auto p2 = point<float, 2>({ 2.1, -1.0 });
+	edge.edge = segment<float, 2>(p1, p2);
+	list.insert(edge);
+	
+	edge.dist_to_p = 14.1;
+	p1 = point<float, 2>({ 31.1, 2.10 });
+	p2 = point<float, 2>({ 12.1, -81.0 });
+	edge.edge = segment<float, 2>(p1, p2);
+	list.insert(edge);
+	
+	list.remove(floating(12.0));
 
-    visualize_hull v2(generate_range(QRectF(100, 100, 200, 200), 10));
-    v2.show();
+	//list.print();
 
-    application.exec();
+	std::cout << list.get_size();
+	system("PAUSE");
 
-    return 0;
+	return 0;
 }
