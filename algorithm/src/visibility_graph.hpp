@@ -7,7 +7,8 @@
 #include <numeric>
 #include <set>
 #include <memory>
-
+#include "skip_list.hpp"
+using namespace data_structures;
 template<class V, class E>
 class graph
 {
@@ -224,19 +225,28 @@ using vertex_data_sptr = std::shared_ptr<vertex_data<T>>;
 template<class T>
 using vertex_data_wptr = std::weak_ptr<vertex_data<T>>;
 
+
+
 template<class T>
-bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data<T>* wm1, bool wm1vis, const std::set<obstacle_edge<T>>& Tree)
+floating distance_from_p(point<T, 2> p, point<T, 2> w)
+{
+	return floating((p - w).length());
+}
+
+template<class T>
+bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data<T>* wm1, bool wm1vis, const skip_list<obstacle_edge<T>, floating>& edges_list)
 {
     auto& obstacle = *w.poly;
     if (intersects_interior(pw, obstacle))
     {
         return false;
     }
-    else if (wm1 && contains(pw, wm1->p))
+    else if (wm1 && contains(pw._ps[0], wm1->p))
     {
-        if (!Tree.empty())
+        if (!edges_list.empty())
         {
-            auto& e = *Tree.begin();
+			auto& e = edges_list.begin();
+			if(e)
             if (intersection(e.edge, pw))
             {
                 return false;
@@ -253,14 +263,9 @@ bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data
     }
     else
     {
+		auto p = pw._ps[0];
         auto wm1w = segment<T, 2>(wm1->p, w.p);
-        for (auto& e : Tree)
-        {
-            if (intersection(e.edge, wm1w))
-            {
-                return false;
-            }
-        }
+		if (edges_list.is_something_between(distance_from_p(p, wm1->p), distance_from_p(p, w.p)))return false;
 
         return true;
     }
@@ -414,7 +419,8 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
     point<T, 2> z{ {0,0} };
     ray<T,2> rotational_sweepline = ray<T, 2>(xline + (p.data()->p - z));
 
-    std::set<obstacle_edge<T>> Tree;
+
+	skip_list<obstacle_edge<T>, floating> edges_list([]() {}); //w konstruktorze trzeba podac funkcje, ktora zwroci odleglosc od p dla danego k¹ta miot³y
     for (auto& obstacle : obstacles)
     {
         for (size_t i = 0; i < obstacle.size(); i++)
@@ -428,7 +434,7 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
             {
                 auto& insersection_point = *insersection_point_opt;
 
-                Tree.insert(obstacle_edge<T>
+                edges_list.insert(obstacle_edge<T>
                     {
                         edge,
                         (p.data()->p - insersection_point).length()
@@ -448,29 +454,35 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
     {
         auto& wi = obstacle_vertices[i];
         auto pw = segment<T, 2>(p.data()->p, wi.first->p);
-        if (visible(*wi.first, pw, wm1, wm1vis, Tree))
-        {
-            wm1vis = true;
-            W.push_back(wi.second);
+		rotational_sweepline = ray<T, 2>(pw);
+		if (visible(*wi.first, pw, wm1, wm1vis, edges_list))
+		{
+			wm1vis = true;
+			W.push_back(wi.second);
+		}
+		else
+		{
+			wm1vis = false;
+		}
 
-            rotational_sweepline = ray<T, 2>(pw);
+			
 
-            auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
-            auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
-
+			auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
+			auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
+		
             if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
             {
-                Tree.insert(
+                edges_list.insert(
                     obstacle_edge<T>
                     {
                         nextedge,
-                        (nextedge[1] - p.data()->p).length()
-                    }
+                        (nextedge[1] - ->p).length()
+                    }p.data()
                 );
             }
             else
             {
-                Tree.erase(obstacle_edge<T>
+                edges_list.erase(obstacle_edge<T>
                     {
                         nextedge,
                         (nextedge[1] - p.data()->p).length()
@@ -480,7 +492,7 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 
             if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
             {
-                Tree.insert(
+                edges_list.insert(
                     obstacle_edge<T>
                     {
                         prevedge,
@@ -490,19 +502,14 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
             }
             else
             {
-                Tree.erase(obstacle_edge<T>
+                edges_list.erase(obstacle_edge<T>
                     {
                         prevedge,
                         (prevedge[0] - p.data()->p).length()
                     }
                 );
             }
-        }
-        else
-        {
-            wm1vis = false;
-        }
-
+        
         wm1 = wi.first.get();
     }
     return W;
@@ -545,3 +552,4 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
 
     return vgraph;
 }
+

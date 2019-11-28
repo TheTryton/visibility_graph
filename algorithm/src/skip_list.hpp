@@ -34,11 +34,6 @@ namespace data_structures {
 		
 	};
 
-	
-	
-
-
-	
 
 	floating floating::max_value=floating(1000000000);
 	floating floating::min_value = floating(-100000000);
@@ -109,8 +104,8 @@ namespace data_structures {
                         ~skip_list();
                         void insert(const T& element);
                         void insert(T&& element);
-                        std::pair<bool, T> get_element(const K& key);
-                        std::pair<bool, T> get_element(K&& key);
+                        std::optional<T> get_element(const K& key);
+                        std::optional<T> get_element(K&& key);
 
                         T& find_no_smaller_than(const K& key);
                         T& find_no_greater_than(const K& key);
@@ -118,6 +113,10 @@ namespace data_structures {
                         void remove(K&& key);
                         void print(size_t from_max_level = MAX_HEIGHT);
 						size_t get_size();
+						bool empty();
+						T& begin();
+						bool is_something_between(K&& start, K&& end);
+						bool is_something_between(const K& start, const K& end);
 
         };
 
@@ -362,20 +361,20 @@ namespace data_structures {
 
 
         template<class T, class K, int MAX_HEIGHT>
-        inline std::pair<bool, T> skip_list<T, K, MAX_HEIGHT>::get_element(const K& key)
+        inline std::optional<T> skip_list<T, K, MAX_HEIGHT>::get_element(const K& key)
         {
                 ptr current = get_preceeding(key);
-                if (get_key_function(current->value) == key) return std::make_pair(true,current->value);
-                else return std::make_pair(false, current->value);
+                if (get_key_function(current->value) == key) return { current->value };
+				else return std::nullopt;
         }
 
 
         template<class T, class K, int MAX_HEIGHT>
-        inline std::pair<bool, T> skip_list<T, K, MAX_HEIGHT>::get_element(K&& key)
+        inline std::optional<T> skip_list<T, K, MAX_HEIGHT>::get_element(K&& key)
         {
                 ptr current = get_preceeding(key);
-                if (get_key_function(current->value) == key) return std::make_pair(true,current->value);
-                else return std::make_pair(false,current->value);
+				if (get_key_function(current->value) == key) return { current->value };
+                else return std::nullopt;
 
         }
 
@@ -471,7 +470,39 @@ namespace data_structures {
 			return this->size;
 		}
 
+		template<class T, class K, int MAX_HEIGHT>
+		inline bool skip_list<T, K, MAX_HEIGHT>::empty()
+		{
+			if (size > 0)return false;
+			return true;
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline T&  skip_list<T, K, MAX_HEIGHT>::begin()
+		{
+			return this->beginning->neighbours[0]->value;
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline bool skip_list<T, K, MAX_HEIGHT>::is_something_between(K && start, K && end)
+		{
+			auto& x = get_element(start);
+			if (x)
+			{
+				//TODO
+			}
+			ptr last = get_preceeding(end);//czy dla key==end znajdzie mi tego, ktory ma taki klucz?
+			ptr first = get_following(end);//czy dla key==end znajdzie mi tego, ktory ma taki klucz?
+			node& last_node = dynamic_cast<node>(*last);
+			node&  first_node= dynamic_cast<node>(*first);
+			if (last_node && first_node)
+			{
+				if (last_node->value != first_node->value)return true;
+			}
+		}
+
 
 	
 
 }
+

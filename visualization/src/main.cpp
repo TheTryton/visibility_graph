@@ -550,7 +550,7 @@ using namespace data_structures;
 
 int main(int argc, char** argv)
 {
-	/*
+	
 	QApplication application(argc, argv);
 
 	std::vector<QPolygonF> polygons =
@@ -593,7 +593,7 @@ int main(int argc, char** argv)
 	);
 	v1.show();
 	application.exec();
-	*/
+	
 
 
 
@@ -626,3 +626,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+
