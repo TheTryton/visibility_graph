@@ -547,10 +547,10 @@ using namespace data_structures;
 
 
 
-
+using namespace data_structures;
 int main(int argc, char** argv)
 {
-	
+	/*
 	QApplication application(argc, argv);
 
 	std::vector<QPolygonF> polygons =
@@ -576,9 +576,6 @@ int main(int argc, char** argv)
 						QPointF(440,230),
 						QPointF(340,200),
 						QPointF(340,210),
-						QPointF(340,-200),
-						QPointF(312,700),
-						QPointF(-41,400)
 					}
 				),
 				circle(QPointF(100,300), 25),
@@ -622,6 +619,37 @@ int main(int argc, char** argv)
 	//list.print();
 
 	std::cout << list.get_size();
+
+
+*/
+
+
+	skip_list<float, floating> lista([](const float& x) {return floating(x); });
+
+	lista.insert(10);
+	lista.insert(20);
+	lista.insert(30);
+	lista.insert(40);
+	lista.print();
+	std::cout << lista.is_something_between(floating(10), floating(20.1));
+	std::cout << lista.is_something_between(floating(10.1), floating(19.9));
+	std::cout << lista.is_something_between(floating(9.9), floating(20.1));
+	std::cout << lista.is_something_between(floating(10.1), floating(20.0));
+	std::cout << lista.is_something_between(floating(10), floating(20.0));
+	std::cout << std::endl;
+	std::cout << lista.is_something_between(floating(0), floating(9.9));
+	std::cout << lista.is_something_between(floating(0), floating(10.0));
+	std::cout << lista.is_something_between(floating(0), floating(10.1));
+	std::cout << std::endl;
+	std::cout << lista.is_something_between(floating(40), floating(100));
+	std::cout << lista.is_something_between(floating(40.1), floating(10.1));
+	std::cout << lista.is_something_between(floating(39.9), floating(100));
+	std::cout << std::endl;
+	auto& x =lista.get_element(floating(30));
+	if (x)
+	{
+		std::cout << *x;
+	}
 	system("PAUSE");
 
 	return 0;

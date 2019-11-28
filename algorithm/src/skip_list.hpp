@@ -25,11 +25,22 @@ namespace data_structures {
 		{
 			return this->val < a.val;
 		}
+
+		bool operator> (const floating& a)
+		{
+			return this->val > a.val;
+		}
 		
 		bool operator== (const floating& a)
 		{
 			return abs(this->val - a.val) < 0.00000001;
 		
+		}
+
+		bool operator== (floating&& a)
+		{
+			return abs(this->val - a.val) < 0.00000001;
+
 		}
 		
 	};
@@ -99,6 +110,8 @@ namespace data_structures {
                         static size_t get_random_height();
                         std::shared_ptr<node> get_preceeding(const K& key);
                         std::shared_ptr<node> get_preceeding(K&& key);
+						std::shared_ptr<node> get_following(const K& key);
+						std::shared_ptr<node> get_following(K&& key);
                 public:
                         skip_list(std::function<K(const T&)> get_key_function);
                         ~skip_list();
@@ -165,7 +178,7 @@ namespace data_structures {
         template<class T, class K, int MAX_HEIGHT>
         inline K skip_list<T, K, MAX_HEIGHT>::node::get_key()
         {
-                return outer.get_key_function(this->value);
+                return outer.get_key_function(value);
         }
 
 // ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗                                  
@@ -238,7 +251,26 @@ namespace data_structures {
 
                         return height;
         }
+		template<class T, class K, int max_height>
+		inline std::shared_ptr<typename skip_list<T, K, max_height>::node > skip_list<T, K, max_height>::get_preceeding(const K & key)
+		{
+			ptr prev = this->beginning;
+			int level = prev->height;
+			ptr current;
+			while (level >= 0)
+			{
+				current = prev->neighbours[level];
 
+				while (current->get_key() < key)
+				{
+					prev = current;
+					current = current->neighbours[level];
+				}
+				level--;
+
+			}
+			return current;
+		}
         template<class T, class K, int max_height>
         inline std::shared_ptr<typename skip_list<T, K, max_height>::node> skip_list<T, K, max_height>::get_preceeding(K&& key)
         {
@@ -249,7 +281,7 @@ namespace data_structures {
                 {
                         current = prev->neighbours[level];
 
-                        while (get_key_function(current->value) < key)
+                        while (current->get_key() < key)
                         {
                                 prev = current;
                                 current = current->neighbours[level];
@@ -260,26 +292,53 @@ namespace data_structures {
                 return current;
         }
 
-        template<class T, class K, int max_height>
-        inline std::shared_ptr<typename skip_list<T, K, max_height>::node > skip_list<T, K, max_height>::get_preceeding(const K & key)
-        {
-                ptr prev = this->beginning;
-                int level = prev->height;
-                ptr current;
-                while (level >= 0)
-                {
-                        current = prev->neighbours[level];
 
-                        while (get_key_function(current->value) < key)
-                        {
-                                prev = current;
-                                current = current->neighbours[level];
-                        }
-                        level--;
 
-                }
-                return current;
-        }
+		template<class T, class K, int MAX_HEIGHT>
+		inline std::shared_ptr<typename skip_list<T, K, MAX_HEIGHT>::node> skip_list<T, K, MAX_HEIGHT>::get_following(const K & key)
+		{
+			ptr prev = this->beginning;
+			int level = prev->height;
+			ptr current;
+			while (level >= 0)
+			{
+				current = prev->neighbours[level];
+
+				while (current->get_key() < key)
+				{
+					prev = current;
+					current = current->neighbours[level];
+				}
+				level--;
+
+			}
+			if (current->get_key() == key)return current->neighbours[0];
+			return current;
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline std::shared_ptr<typename skip_list<T, K, MAX_HEIGHT>::node> skip_list<T, K, MAX_HEIGHT>::get_following(K && key)
+		{
+			ptr prev = this->beginning;
+			int level = prev->height;
+			ptr current;
+			while (level >= 0)
+			{
+				current = prev->neighbours[level];
+
+				while (current->get_key() < key)
+				{
+					prev = current;
+					current = current->neighbours[level];
+				}
+				level--;
+
+			}
+			if (current->get_key() == key)return current->neighbours[0];
+			return current;
+		}
+
+       
 
 
 
@@ -339,7 +398,7 @@ namespace data_structures {
         inline void skip_list<T, K, MAX_HEIGHT>::insert(T&& element)
         {
                 K key = get_key_function(element);
-                ptr new_node = ptr(new node(element));
+                ptr new_node = ptr(new node(*this, element));
                 int level = new_node->height;
                 ptr current = this->beginning;
                 ptr next;
@@ -347,7 +406,7 @@ namespace data_structures {
                 {
                         next = current->neighbours[level];
 
-                        while (key< next->get_key())
+                        while (next->get_key()<key)
                         {
                                 current = next;
                                 next = next->neighbours[level];
@@ -486,19 +545,14 @@ namespace data_structures {
 		template<class T, class K, int MAX_HEIGHT>
 		inline bool skip_list<T, K, MAX_HEIGHT>::is_something_between(K && start, K && end)
 		{
-			auto& x = get_element(start);
-			if (x)
-			{
-				//TODO
-			}
-			ptr last = get_preceeding(end);//czy dla key==end znajdzie mi tego, ktory ma taki klucz?
-			ptr first = get_following(end);//czy dla key==end znajdzie mi tego, ktory ma taki klucz?
-			node& last_node = dynamic_cast<node>(*last);
-			node&  first_node= dynamic_cast<node>(*first);
-			if (last_node && first_node)
-			{
-				if (last_node->value != first_node->value)return true;
-			}
+			
+			if (end <start)return false;
+			ptr first = get_following(start);
+	
+			if (typeid(first) == typeid(guard_node))return false;
+			if (first->get_key() < end)return true;
+			return false;
+			
 		}
 
 
