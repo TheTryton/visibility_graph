@@ -112,22 +112,23 @@ namespace data_structures {
                         std::shared_ptr<node> get_preceeding(K&& key);
 						std::shared_ptr<node> get_following(const K& key);
 						std::shared_ptr<node> get_following(K&& key);
-                public:
+						
+				public:
                         skip_list(std::function<K(const T&)> get_key_function);
                         ~skip_list();
                         void insert(const T& element);
                         void insert(T&& element);
                         std::optional<T> get_element(const K& key);
                         std::optional<T> get_element(K&& key);
-
-                        T& find_no_smaller_than(const K& key);
-                        T& find_no_greater_than(const K& key);
-                        void remove(const K& key);
-                        void remove(K&& key);
+						void remove(const K& key);
+						void remove(K&& key);
+                      
+                        void remove(const T& object);
+                        void remove(T&& object);
                         void print(size_t from_max_level = MAX_HEIGHT);
 						size_t get_size();
 						bool empty();
-						T& begin();
+						std::optional<T> begin();
 						bool is_something_between(K&& start, K&& end);
 						bool is_something_between(const K& start, const K& end);
 
@@ -503,7 +504,74 @@ namespace data_structures {
 
         }
 
-        template<class T, class K, int MAX_HEIGHT>
+		template<class T, class K, int MAX_HEIGHT>
+		inline void skip_list<T, K, MAX_HEIGHT>::remove(const T & object)
+		{
+			K key = get_key_function(object);
+			auto next = get_preceeding(key)->neighbours[0];
+			while (typeid(next) != typeid(guard_node) && next->get_key() == key)
+			{
+				if (object == next->value)
+				{
+					auto element = get_element(key);
+					if (element)
+					{
+						if (*element == object)
+						{
+							remove(key);
+							size--;
+							return;
+						}
+						else
+						{
+							remove(key);
+							next->value = *element;
+							size--;
+							return;
+						}
+					}
+					
+					
+				}
+				next = next->neighbours[0];
+			}
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline void skip_list<T, K, MAX_HEIGHT>::remove(T&& object)
+		{
+
+			K key = get_key_function(object);
+			auto next = get_preceeding(key);
+			while (typeid(next) != typeid(guard_node) && next->get_key() == key)
+			{
+				if (object == next->value)
+				{
+					auto element = get_element(key);
+					if (element)
+					{
+						if (*element == object)
+						{
+							remove(key);
+							size--;
+							return;
+						}
+						else
+						{
+							remove(key);
+							next->value = *element;
+							size--;
+							return;
+						}
+					}
+
+
+				}
+				next = next->neighbours[0];
+			}
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
         inline void skip_list<T, K, MAX_HEIGHT>::print(size_t from_level)
         {
                 for (int level = from_level; level >= 0; level--)
@@ -537,9 +605,10 @@ namespace data_structures {
 		}
 
 		template<class T, class K, int MAX_HEIGHT>
-		inline T&  skip_list<T, K, MAX_HEIGHT>::begin()
+		inline std::optional<T>  skip_list<T, K, MAX_HEIGHT>::begin()
 		{
-			return this->beginning->neighbours[0]->value;
+			if (size > 0) return { this->beginning->neighbours[0]->value };
+			else return std::nullopt;
 		}
 
 		template<class T, class K, int MAX_HEIGHT>
@@ -553,6 +622,17 @@ namespace data_structures {
 			if (first->get_key() < end)return true;
 			return false;
 			
+		}
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline bool skip_list<T, K, MAX_HEIGHT>::is_something_between(const K & start, const K & end)
+		{
+			if (end < start)return false;
+			ptr first = get_following(start);
+
+			if (typeid(first) == typeid(guard_node))return false;
+			if (first->get_key() < end)return true;
+			return false;
 		}
 
 

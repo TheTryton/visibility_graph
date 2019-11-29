@@ -545,43 +545,71 @@ std::vector<QPointF> generate_range(const QRectF& range, size_t count)
 }
 using namespace data_structures;
 
-
+class floaty
+{
+	public:
+		static floaty max_value;
+		static floaty min_value;
+	float x;
+	floaty(float x)
+	{
+		this->x = x;
+	}
+	bool operator==(const floaty& other)
+	{
+		if (floor(this->x) == floor(other.x))return true;
+		return false;
+	}
+	bool operator<(const floaty& other)
+	{
+		if (floor(this->x) < floor(other.x))return true;
+		return false;
+	}
+};
+floaty floaty::max_value = floaty(1000000000);
+floaty floaty::min_value = floaty(-100000000);
 
 using namespace data_structures;
 int main(int argc, char** argv)
 {
-	/*
+	
 	QApplication application(argc, argv);
 
-	std::vector<QPolygonF> polygons =
+	std::vector<polygon<float>> polygons =
 	{
-		 QPolygonF(
+		 polygon<float>(
 					{
-						QPointF(50,50),
-						QPointF(100,50),
-						QPointF(50,100)
+						point<float,2>({0,0}),
+				
 					}
 				),
-				QPolygonF(
+		 polygon<float>(
 					{
-						QPointF(200,200),
-						QPointF(250,200),
-						QPointF(200,250)
+						point<float,2>({50,50}),
+						point<float,2>({100,50}),
+						point<float,2>({50,100})
+					}
+				)
+				/*polygon<float>(
+					{
+						point<float,2>({200,200}),
+						point<float,2>({250,200}),
+						point<float,2>({200,250})
 					}
 				),
-				QPolygonF(
+				polygon<float>(
 					{
-						QPointF(320,100),
-						QPointF(420,150),
-						QPointF(440,230),
-						QPointF(340,200),
-						QPointF(340,210),
+						point<float,2>({320,100}),
+						point<float,2>({420,150}),
+						point<float,2>({440,230}),
+						point<float,2>({340,200}),
+						point<float,2>({340,210}),
 					}
-				),
-				circle(QPointF(100,300), 25),
-				star(QPointF(200,300), 25)
+				),*/
 	};
-
+	
+	compute_visibility_graph(polygons);
+	/*
 	visualize v1(
 		construct_visibility_graph(
 			polygons
@@ -621,7 +649,7 @@ int main(int argc, char** argv)
 	std::cout << list.get_size();
 
 
-*/
+
 
 
 	skip_list<float, floating> lista([](const float& x) {return floating(x); });
@@ -650,6 +678,23 @@ int main(int argc, char** argv)
 	{
 		std::cout << *x;
 	}
+	*/
+/*
+skip_list<float, floaty> lista([](const float& x)->floaty {return floaty(x); });
+lista.insert(12.3);
+lista.insert(125.5);
+lista.insert(1.23);
+lista.insert(1.45);
+lista.insert(1.565);
+lista.insert(1.1);
+lista.insert(1.02);
+lista.print(0);
+lista.remove(1.453);
+lista.print(0);
+*/
+
+
+
 	system("PAUSE");
 
 	return 0;
