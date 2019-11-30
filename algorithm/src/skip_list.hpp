@@ -553,14 +553,12 @@ namespace data_structures {
 						if (*element == object)
 						{
 							remove(key);
-							size--;
 							return;
 						}
 						else
 						{
 							remove(key);
 							next->value = *element;
-							size--;
 							return;
 						}
 					}

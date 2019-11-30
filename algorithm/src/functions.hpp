@@ -28,12 +28,12 @@ std::optional<point<T, 2>> intersection(const line_like<T, 2>& l1, const line_li
     auto v1 = l1.creating_vector();
     auto v2 = l2.creating_vector();
 
-    float W = v1[1] * v2[0] - v1[0] * v2[1];
+    float W = v1[0] * v2[1] - v1[1] * v2[0];
     if (std::abs(W) < std::numeric_limits<float>::epsilon())
     {
         return std::nullopt;
     }
-    float Wt = p2p1[1] * v2[0] - p2p1[0] * v2[1];
+    float Wt = p2p1[0] * v2[1] - p2p1[1] * v2[0];
     float Ws = v1[1] * p2p1[0] - v1[0] * p2p1[1];
 
     float t = Wt / W;
@@ -44,7 +44,7 @@ std::optional<point<T, 2>> intersection(const line_like<T, 2>& l1, const line_li
         return std::nullopt;
     }
 
-    if (!l2.algebraically_inside(t))
+    if (!l2.algebraically_inside(s))
     {
         return std::nullopt;
     }

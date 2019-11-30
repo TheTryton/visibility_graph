@@ -490,6 +490,12 @@ public:
         return result;
     }
 public:
+	void rotate_clockwisely(const float& angle)
+	{
+		auto x = _ps[1][0];
+		auto y = _ps[1][1];
+		_ps[1] =point<T, 2>({ x*cos(angle) - y * sin(-angle), x*sin(angle) + y * cos(-angle) });
+	}
     virtual bool algebraically_inside(const T& coefficent) const override
     {
         return coefficent >= 0;

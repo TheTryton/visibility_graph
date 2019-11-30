@@ -9,6 +9,8 @@
 #include <memory>
 
 #include <exception>
+
+#define EPS 0.005
 using namespace data_structures;
 template<class V, class E>
 class graph
@@ -428,7 +430,7 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 		std::optional<point<T, 2>> intersection_point = intersection(rotational_sweepline, edge.edge);
 		if(intersection_point) return distance_from_p<T>(rotational_sweepline.p1(), *intersection_point);
 		throw new std::exception("Ray does not intersect given edge.");
-	}
+ 	}
 	); 
     /*for (auto& obstacle : obstacles)
     {
@@ -476,11 +478,36 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 			wm1vis = false;
 		}
 
-			
+			//najpierw remove, potem insert!!!
 
 			auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
 			auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
 		
+			rotational_sweepline.rotate_clockwisely(-EPS);
+			if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::left)
+			{
+				edges_list.remove(obstacle_edge<T>
+				{
+					nextedge,
+						(nextedge[0] - p.data()->p).length()
+				}
+				);
+			}
+
+
+			if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::left)
+			{
+				edges_list.remove(obstacle_edge<T>
+				{
+					prevedge,
+						(prevedge[1] - p.data()->p).length()
+				}
+				);
+			}
+
+
+			//delikatnie obroc miotle
+			rotational_sweepline.rotate_clockwisely(2*EPS);
             if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
             {
                 edges_list.insert(
@@ -491,16 +518,9 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
                     }
                 );
             }
-            else
-            {
-                edges_list.remove(obstacle_edge<T>
-                    {
-                        nextedge,
-                        (nextedge[0] - p.data()->p).length()
-                    }
-                );
-            }
 
+
+           
             if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
             {
                 edges_list.insert(
@@ -511,16 +531,8 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
                     }
                 );
             }
-            else
-            {
-               edges_list.remove(obstacle_edge<T>
-                    {
-                        prevedge,
-                        (prevedge[1] - p.data()->p).length()
-                    }
-                );
-            }
-        
+          
+		
         wm1 = wi.first.get();
     }
     return W;

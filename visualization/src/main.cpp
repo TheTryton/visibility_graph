@@ -573,6 +573,9 @@ using namespace data_structures;
 int main(int argc, char** argv)
 {
 	
+
+
+
 	QApplication application(argc, argv);
 
 	std::vector<polygon<float>> polygons =
