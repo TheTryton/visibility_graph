@@ -1,6 +1,6 @@
 #pragma once
 
-#include <functions.hpp>
+#include <math/math.hpp>
 #include "skip_list.hpp"
 #include <vector>
 #include <algorithm>
@@ -10,8 +10,8 @@
 
 #include <exception>
 
-#define EPS 0.005
 using namespace data_structures;
+using namespace math;
 template<class V, class E>
 class graph
 {
@@ -211,7 +211,7 @@ template<class T>
 struct obstacle_edge
 {
     segment<T, 2> edge;
-    float dist_to_p;
+    T dist_to_p;
     //bool operator<(const obstacle_edge& other) const
     //{
     //    return dist_to_p < other.dist_to_p;
@@ -219,6 +219,12 @@ struct obstacle_edge
     bool operator==(const obstacle_edge& other)
     {
         return edge == other.edge;
+    }
+    friend std::ostream& operator << (std::ostream& out, const obstacle_edge& e)
+    {
+        out << e.edge.p1() << " " << e.edge.p2();
+        return out;
+
     }
 };
 
@@ -233,7 +239,7 @@ using vertex_data_wptr = std::weak_ptr<vertex_data<T>>;
 template<class T>
 floating distance_from_p(point<T, 2> p, point<T, 2> w)
 {
-	return floating((p - w).length());
+    return floating((p - w).length());
 }
 
 template<class T>
@@ -244,22 +250,22 @@ bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data
     {
         return false;
     }
-    else if (wm1 && contains(pw, wm1->p))
+    else if (wm1 && !contains(pw, wm1->p))
     {
         if (!edges_list.empty())
         {
-			auto& e = edges_list.begin();
-			if (e)
-			{
-				if (intersection((*e).edge, pw))
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
-			}
+            auto& e = edges_list.begin();
+            if (e)
+            {
+                if (intersection((*e).edge, pw))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
         }
     }
     else if (!wm1vis)
@@ -268,9 +274,9 @@ bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data
     }
     else
     {
-		auto p = pw.p1();
+        auto p = pw.p1();
         auto wm1w = segment<T, 2>(wm1->p, w.p);
-		if (edges_list.is_something_between(distance_from_p(p, wm1->p), distance_from_p(p, w.p)))return false;
+        if (edges_list.is_something_between(distance_from_p(p, wm1->p), distance_from_p(p, w.p)))return false;
 
         return true;
     }
@@ -282,7 +288,7 @@ T clockwise_angle(const point<T, 2>& p1, const point<T, 2>& p2, const point<T, 2
     T dirp2p1 = std::atan2(p1[1] - p2[1], p1[0] - p2[0]);
     T dirp2p3 = std::atan2(p3[1] - p2[1], p3[0] - p2[0]);
     T anglep1p2p3 = dirp2p1 - dirp2p3;
-    
+
     const T pi = std::acos(T(-1));
     if (anglep1p2p3 > pi) anglep1p2p3 -= 2 * pi;
     else if (anglep1p2p3 < -pi) anglep1p2p3 += 2 * pi;
@@ -290,10 +296,10 @@ T clockwise_angle(const point<T, 2>& p1, const point<T, 2>& p2, const point<T, 2
     return anglep1p2p3 + pi;
 }
 
-template<class T, class VT> 
+template<class T, class VT>
 auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, const visibility_graph<vertex_data_sptr<T>>& vgraph)
 {
-    std::vector<std::pair<vertex_data_sptr<T>, size_t>> obstacle_vertices{vgraph.vertices().size()};
+    std::vector<std::pair<vertex_data_sptr<T>, size_t>> obstacle_vertices{ vgraph.vertices().size() };
 
     std::transform(vgraph.vertices().begin(), vgraph.vertices().end(), obstacle_vertices.begin(), [](const auto& v) {
         return std::make_pair(v.data(), v.id());
@@ -336,7 +342,7 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
             {
                 return true;
             }
-            
+
             if (rtol == side_of_line::right && rtox == side_of_line::on)
             {
                 return true;
@@ -352,7 +358,7 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
                 return true;
             }
         }
-        
+
         if (ltox == side_of_line::left)
         {
             if (rtol == side_of_line::on && rtox == side_of_line::right)
@@ -422,22 +428,27 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
     std::sort(obstacle_vertices.begin(), obstacle_vertices.end(), compare_f);
 
     point<T, 2> z{ {1,0} };
-    ray<T,2> rotational_sweepline = ray<T, 2>(xline + (p.data()->p - z));
+    ray<T, 2> rotational_sweepline = ray<T, 2>(xline + (p.data()->p - z));
 
 
-	skip_list<obstacle_edge<T>, floating> edges_list([&rotational_sweepline](const obstacle_edge<T>& edge)->floating
-	{
-		std::optional<point<T, 2>> intersection_point = intersection(rotational_sweepline, edge.edge);
-		if(intersection_point) return distance_from_p<T>(rotational_sweepline.p1(), *intersection_point);
-		throw new std::exception("Ray does not intersect given edge.");
- 	}
-	); 
-    /*for (auto& obstacle : obstacles)
+    skip_list<obstacle_edge<T>, floating> edges_list([&rotational_sweepline](const obstacle_edge<T>& edge)->floating
+        {
+            line<T, 2> l = line<T, 2>(edge.edge.p1(), edge.edge.p2());
+            std::optional<point<T, 2>> intersection_point = intersection(rotational_sweepline, l);
+            //vector<T, 2> epsv = edge.edge.unit_creating_vector()*(std::numeric_limits<T>::epsilon()*1);
+            if (intersection_point) return distance_from_p<T>(rotational_sweepline.p1(), *intersection_point);
+            //throw new std::exception("Ray does not intersect given edge.");
+
+
+        }
+    );
+
+    for (auto& obstacle : obstacles)
     {
         for (size_t i = 0; i < obstacle.size(); i++)
         {
             auto& p1 = obstacle[i];
-            auto& p2 = obstacle[(i+1) % obstacle.size()];
+            auto& p2 = obstacle[(i + 1) % obstacle.size()];
             segment<T, 2> edge{ p1,p2 };
 
             auto insersection_point_opt = intersection(rotational_sweepline, edge);
@@ -446,15 +457,15 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
                 auto& insersection_point = *insersection_point_opt;
 
                 edges_list.insert(obstacle_edge<T>
-                    {
-                        edge,
+                {
+                    edge,
                         (p.data()->p - insersection_point).length()
-                    }
+                }
                 );
             }
-            
+
         }
-    }*/
+    }
 
     using vertex_type = visibility_graph<vertex_data<T>>::vertex;
 
@@ -465,74 +476,75 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
     {
 
         auto& wi = obstacle_vertices[i];
-		if (wi.first->p == p.data()->p)continue;
+        if (wi.first->p == p.data()->p)continue;
         auto pw = segment<T, 2>(p.data()->p, wi.first->p);
-		rotational_sweepline = ray<T, 2>(pw);
-		if (visible(*wi.first, pw, wm1, wm1vis, edges_list))
-		{
-			wm1vis = true;
-			W.push_back(wi.second);
-		}
-		else
-		{
-			wm1vis = false;
-		}
+        rotational_sweepline = ray<T, 2>(pw);
+        if (visible(*wi.first, pw, wm1, wm1vis, edges_list))
+        {
+            wm1vis = true;
+            W.push_back(wi.second);
+        }
+        else
+        {
+            wm1vis = false;
+        }
 
-			//najpierw remove, potem insert!!!
-
-			auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
-			auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
-		
-			rotational_sweepline.rotate_clockwisely(-EPS);
-			if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::left)
-			{
-				edges_list.remove(obstacle_edge<T>
-				{
-					nextedge,
-						(nextedge[0] - p.data()->p).length()
-				}
-				);
-			}
+        auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
+        auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
 
 
-			if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::left)
-			{
-				edges_list.remove(obstacle_edge<T>
-				{
-					prevedge,
-						(prevedge[1] - p.data()->p).length()
-				}
-				);
-			}
 
+        rotational_sweepline.rotate_clockwisely(epsilon<T>);
 
-			//delikatnie obroc miotle
-			rotational_sweepline.rotate_clockwisely(2*EPS);
-            if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
+        if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::left)
+        {
+            edges_list.remove(obstacle_edge<T>
             {
-                edges_list.insert(
-                    obstacle_edge<T>
-                    {
-                        nextedge,
-                        (nextedge[0] - p.data()->p).length()
-                    }
-                );
+                nextedge,
+                    (nextedge[0] - p.data()->p).length()
             }
+            );
+        }
 
 
-           
-            if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
+        if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::left)
+        {
+            edges_list.remove(obstacle_edge<T>
             {
-                edges_list.insert(
-                    obstacle_edge<T>
-                    {
-                        prevedge,
-                        (prevedge[1] - p.data()->p).length()
-                    }
-                );
+                prevedge,
+                    (prevedge[1] - p.data()->p).length()
             }
-          
-		
+            );
+        }
+
+
+
+        rotational_sweepline.rotate_clockwisely(-2 * epsilon<T>);
+
+        if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
+        {
+            edges_list.insert(
+                obstacle_edge<T>
+            {
+                nextedge,
+                    (nextedge[0] - p.data()->p).length()
+            }
+            );
+        }
+
+
+
+        if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
+        {
+            edges_list.insert(
+                obstacle_edge<T>
+            {
+                prevedge,
+                    (prevedge[1] - p.data()->p).length()
+            }
+            );
+        }
+
         wm1 = wi.first.get();
     }
     return W;
@@ -549,7 +561,7 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
         {
             auto& vertex = obstacle[i];
             polygon_vertices.emplace_back(
-                new vertex_data<T>{ vertex, & obstacle, std::weak_ptr<vertex_data<T>>(), std::weak_ptr<vertex_data<T>>() }
+                new vertex_data<T>{ vertex, &obstacle, std::weak_ptr<vertex_data<T>>(), std::weak_ptr<vertex_data<T>>() }
             );
         }
 
@@ -564,12 +576,8 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
 
     visibility_graph<vertex_data_sptr<T>> vgraph{ all_vertices.begin(), all_vertices.end() };
 
-	auto v = vgraph.vertices()[3];
-	visible_vertices(v, obstacles, vgraph);
-	return vgraph;
-    
-	
-	for (auto& v : vgraph.vertices())
+
+    for (auto& v : vgraph.vertices())
     {
         auto W = visible_vertices(v, obstacles, vgraph);
         for (auto& w : W)

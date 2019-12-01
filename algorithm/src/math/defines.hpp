@@ -1,0 +1,6 @@
+#pragma once
+
+#define MATH_NAMESPACE math
+#define MATH_NAMESPACE_FULL MATH_NAMESPACE
+#define MATH_NAMESPACE_BEGIN namespace MATH_NAMESPACE_FULL{
+#define MATH_NAMESPACE_END }
