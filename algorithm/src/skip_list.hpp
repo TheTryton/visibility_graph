@@ -13,7 +13,7 @@ namespace data_structures {
 	
 	class floating
 	{
-	protected:
+	public:
 		float val;
 	public:
 		floating(float a) : val(a) {}
@@ -33,13 +33,13 @@ namespace data_structures {
 		
 		bool operator== (const floating& a)
 		{
-			return abs(this->val - a.val) < 0.00000001;
+			return abs(this->val - a.val) < std::numeric_limits<float>::epsilon();
 		
 		}
 
 		bool operator== (floating&& a)
 		{
-			return abs(this->val - a.val) < 0.00000001;
+			return abs(this->val - a.val) < std::numeric_limits<float>::epsilon();
 
 		}
 		
@@ -123,9 +123,10 @@ namespace data_structures {
 						void remove(const K& key);
 						void remove(K&& key);
                       
-                        void remove(const T& object);
-                        void remove(T&& object);
+                        bool remove(const T& object);
+                        bool remove(T&& object);
                         void print(size_t from_max_level = MAX_HEIGHT);
+						void print2(size_t from_max_level = MAX_HEIGHT);
 						size_t get_size();
 						bool empty();
 						std::optional<T> begin();
@@ -403,6 +404,7 @@ namespace data_structures {
                 int level = new_node->height;
                 ptr current = this->beginning;
                 ptr next;
+				
                 while (level >= 0)
                 {
                         next = current->neighbours[level];
@@ -417,6 +419,7 @@ namespace data_structures {
                         level--;
                 }
 				size++;
+
         }
 
 
@@ -446,9 +449,11 @@ namespace data_structures {
                 int level = current->height;
                 ptr next = current->neighbours[level];
 				bool is_being_deleted = false;
+				
+				
                 while (level >= 0)
                 {
-
+						
                         while (next->get_key() < key)
                         {
                                 current = next;
@@ -464,10 +469,13 @@ namespace data_structures {
                         else
                         {
                                 level--;
-                                next = current->neighbours[level];
+								next = current;
                         }
                 }
-				if (is_being_deleted)size--;
+				if (is_being_deleted)
+				{
+					size--;
+				}
         }
 
 
@@ -496,7 +504,7 @@ namespace data_structures {
                         else
                         {
                                 level--;
-                                next = current->neighbours[level];
+                                if(level>=0)next = current->neighbours[level];
                         }
 
                 }
@@ -505,10 +513,13 @@ namespace data_structures {
         }
 
 		template<class T, class K, int MAX_HEIGHT>
-		inline void skip_list<T, K, MAX_HEIGHT>::remove(const T & object)
+		inline bool skip_list<T, K, MAX_HEIGHT>::remove(const T & object)
 		{
 			K key = get_key_function(object);
-			auto next = get_preceeding(key)->neighbours[0];
+
+			remove(key);
+			return;
+			/*auto next = get_preceeding(key)->neighbours[0];
 			while (typeid(next) != typeid(guard_node) && next->get_key() == key)
 			{
 				if (object == next->value)
@@ -527,22 +538,23 @@ namespace data_structures {
 							remove(key);
 							next->value = *element;
 							size--;
-							return;
+							return true;
 						}
 					}
 					
 					
 				}
 				next = next->neighbours[0];
-			}
+			}*/
 		}
 
 		template<class T, class K, int MAX_HEIGHT>
-		inline void skip_list<T, K, MAX_HEIGHT>::remove(T&& object)
+		inline bool skip_list<T, K, MAX_HEIGHT>::remove(T&& object)
 		{
-
 			K key = get_key_function(object);
-			auto next = get_preceeding(key);
+			remove(key);
+			return true;
+			/*auto next = get_preceeding(key);
 			while (typeid(next) != typeid(guard_node) && next->get_key() == key)
 			{
 				if (object == next->value)
@@ -553,20 +565,20 @@ namespace data_structures {
 						if (*element == object)
 						{
 							remove(key);
-							return;
+							return true;
 						}
 						else
 						{
 							remove(key);
 							next->value = *element;
-							return;
+							return true;
 						}
 					}
 
 
 				}
 				next = next->neighbours[0];
-			}
+			}*/
 		}
 
 		template<class T, class K, int MAX_HEIGHT>
@@ -576,8 +588,8 @@ namespace data_structures {
                 {
                         auto current = this->beginning;
                         while (current != nullptr)
-                        {
-                                std::cout << current->value;
+                        {		
+								if(typeid(current)!=typeid(guard_node)) std::cout << current->value;
                                 for (int i = 0; i < 10; i++)
                                 {
                                         std::cout << "-";
@@ -588,6 +600,27 @@ namespace data_structures {
                         std::cout << std::endl;
                 }
         }
+
+
+		template<class T, class K, int MAX_HEIGHT>
+		inline void skip_list<T, K, MAX_HEIGHT>::print2(size_t from_level)
+		{
+			for (int level = from_level; level >= 0; level--)
+			{
+				auto current = this->beginning;
+				while (current != nullptr)
+				{
+					if (typeid(current) != typeid(guard_node)) std::cout << current->get_key().val;
+					for (int i = 0; i < 10; i++)
+					{
+						std::cout << "-";
+					}
+					current = current->neighbours[level];
+
+				}
+				std::cout << std::endl;
+			}
+		}
 
 		template<class T, class K, int MAX_HEIGHT>
 		inline size_t skip_list<T, K, MAX_HEIGHT>::get_size()

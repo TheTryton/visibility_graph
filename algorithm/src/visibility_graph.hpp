@@ -10,7 +10,6 @@
 
 #include <exception>
 
-#define EPS 0.005
 using namespace data_structures;
 template<class V, class E>
 class graph
@@ -220,6 +219,12 @@ struct obstacle_edge
     {
         return edge == other.edge;
     }
+	friend std::ostream & operator << (std::ostream &out, const obstacle_edge &e)
+	{
+			out << e.edge.p1() << " " << e.edge.p2();
+			return out;
+	
+	}
 };
 
 template<class T>
@@ -244,7 +249,7 @@ bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data
     {
         return false;
     }
-    else if (wm1 && contains(pw, wm1->p))
+    else if (wm1 && !contains(pw, wm1->p))
     {
         if (!edges_list.empty())
         {
@@ -427,12 +432,17 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 
 	skip_list<obstacle_edge<T>, floating> edges_list([&rotational_sweepline](const obstacle_edge<T>& edge)->floating
 	{
-		std::optional<point<T, 2>> intersection_point = intersection(rotational_sweepline, edge.edge);
+		line<T, 2> l = line<T, 2>(edge.edge.p1(), edge.edge.p2());
+		std::optional<point<T, 2>> intersection_point = intersection(rotational_sweepline,l);
+		//vector<T, 2> epsv = edge.edge.unit_creating_vector()*(std::numeric_limits<T>::epsilon()*1);
 		if(intersection_point) return distance_from_p<T>(rotational_sweepline.p1(), *intersection_point);
-		throw new std::exception("Ray does not intersect given edge.");
+		//throw new std::exception("Ray does not intersect given edge.");
+		
+		
  	}
 	); 
-    /*for (auto& obstacle : obstacles)
+	
+    for (auto& obstacle : obstacles)
     {
         for (size_t i = 0; i < obstacle.size(); i++)
         {
@@ -454,8 +464,8 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
             }
             
         }
-    }*/
-
+    }
+	
     using vertex_type = visibility_graph<vertex_data<T>>::vertex;
 
     std::vector<size_t> W;
@@ -478,12 +488,13 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 			wm1vis = false;
 		}
 
-			//najpierw remove, potem insert!!!
-
 			auto nextedge = segment<T, 2>(wi.first->p, wi.first->next.lock()->p);
 			auto prevedge = segment<T, 2>(wi.first->prev.lock()->p, wi.first->p);
+			
+
 		
-			rotational_sweepline.rotate_clockwisely(-EPS);
+			rotational_sweepline.rotate_clockwisely(epsilon<T>);
+
 			if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::left)
 			{
 				edges_list.remove(obstacle_edge<T>
@@ -505,34 +516,34 @@ auto visible_vertices(const VT& p, const std::vector<polygon<T>>& obstacles, con
 				);
 			}
 
-
-			//delikatnie obroc miotle
-			rotational_sweepline.rotate_clockwisely(2*EPS);
-            if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
-            {
-                edges_list.insert(
-                    obstacle_edge<T>
-                    {
-                        nextedge,
-                        (nextedge[0] - p.data()->p).length()
-                    }
-                );
-            }
-
-
-           
-            if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
-            {
-                edges_list.insert(
-                    obstacle_edge<T>
-                    {
-                        prevedge,
-                        (prevedge[1] - p.data()->p).length()
-                    }
-                );
-            }
-          
 		
+
+			rotational_sweepline.rotate_clockwisely(-2*epsilon<T>);
+		
+			if (get_side_of_line(rotational_sweepline, nextedge[1]) == side_of_line::right)
+			{
+				edges_list.insert(
+					obstacle_edge<T>
+				{
+					nextedge,
+						(nextedge[0] - p.data()->p).length()
+				}
+				);
+			}
+
+
+
+			if (get_side_of_line(rotational_sweepline, prevedge[0]) == side_of_line::right)
+			{
+				edges_list.insert(
+					obstacle_edge<T>
+				{
+					prevedge,
+						(prevedge[1] - p.data()->p).length()
+				}
+				);
+			}
+			
         wm1 = wi.first.get();
     }
     return W;
@@ -563,10 +574,6 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
     }
 
     visibility_graph<vertex_data_sptr<T>> vgraph{ all_vertices.begin(), all_vertices.end() };
-
-	auto v = vgraph.vertices()[3];
-	visible_vertices(v, obstacles, vgraph);
-	return vgraph;
     
 	
 	for (auto& v : vgraph.vertices())

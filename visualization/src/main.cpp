@@ -6,7 +6,7 @@
 #include <stack>
 #include <chrono>
 #include <random>
-#include "skip_list.hpp"
+//#include "skip_list.hpp"
 std::optional<QPointF> intersect_line_line(const QLineF& line1, const QLineF& line2)
 {
     auto p2p1 = line2.p1() - line1.p1();
@@ -545,29 +545,29 @@ std::vector<QPointF> generate_range(const QRectF& range, size_t count)
 }
 using namespace data_structures;
 
-class floaty
-{
-	public:
-		static floaty max_value;
-		static floaty min_value;
-	float x;
-	floaty(float x)
-	{
-		this->x = x;
-	}
-	bool operator==(const floaty& other)
-	{
-		if (floor(this->x) == floor(other.x))return true;
-		return false;
-	}
-	bool operator<(const floaty& other)
-	{
-		if (floor(this->x) < floor(other.x))return true;
-		return false;
-	}
-};
-floaty floaty::max_value = floaty(1000000000);
-floaty floaty::min_value = floaty(-100000000);
+//class floaty
+//{
+//	public:
+//		static floaty max_value;
+//		static floaty min_value;
+//	float x;
+//	floaty(float x)
+//	{
+//		this->x = x;
+//	}
+//	bool operator==(const floaty& other)
+//	{
+//		if (floor(this->x) == floor(other.x))return true;
+//		return false;
+//	}
+//	bool operator<(const floaty& other)
+//	{
+//		if (floor(this->x) < floor(other.x))return true;
+//		return false;
+//	}
+//};
+//floaty floaty::max_value = floaty(1000000000);
+//floaty floaty::min_value = floaty(-100000000);
 
 using namespace data_structures;
 int main(int argc, char** argv)
@@ -592,15 +592,15 @@ int main(int argc, char** argv)
 						point<float,2>({100,50}),
 						point<float,2>({50,100})
 					}
-				)
-				/*polygon<float>(
-					{
-						point<float,2>({200,200}),
-						point<float,2>({250,200}),
-						point<float,2>({200,250})
-					}
 				),
 				polygon<float>(
+					{
+						point<float,2>({100,100}),
+						point<float,2>({150,100}),
+						point<float,2>({100,150})
+					}
+				)
+				/*polygon<float>(
 					{
 						point<float,2>({320,100}),
 						point<float,2>({420,150}),

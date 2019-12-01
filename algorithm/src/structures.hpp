@@ -211,6 +211,11 @@ public:
     point& operator=(const point& other) = default;
     point& operator=(point&& other) = default;
 public:
+	friend std::ostream & operator << (std::ostream &out, const point &p)
+	{
+		out << p._coords[0] << ","<<p._coords[1];
+		return out;
+	}
     point& operator+=(const vector<T,D>& other)
     {
         for (size_t i = 0; i < D; i++)
@@ -490,11 +495,12 @@ public:
         return result;
     }
 public:
-	void rotate_clockwisely(const float& angle)
+	void rotate_clockwisely(float angle)
 	{
 		auto x = _ps[1][0];
 		auto y = _ps[1][1];
-		_ps[1] =point<T, 2>({ x*cos(angle) - y * sin(-angle), x*sin(angle) + y * cos(-angle) });
+		_ps[1] =point<T, 2>({ x*cos(angle) - y * sin(angle), x*sin(angle) + y * cos(angle) });
+		return;
 	}
     virtual bool algebraically_inside(const T& coefficent) const override
     {
