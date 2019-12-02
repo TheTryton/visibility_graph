@@ -21,7 +21,7 @@ side_of_line get_side_of_line(const line_like<T, 2>& l, const point<T, 2>& point
 
     auto v = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 
-    return v > 0.0f ? side_of_line::left : (v < 0.0f ? side_of_line::right : side_of_line::on);
+    return v < 0.0f ? side_of_line::left : (v > 0.0f ? side_of_line::right : side_of_line::on);
 }
 
 template<class T>

@@ -105,13 +105,13 @@ inline vector<T, D> line_like<T, D>::unit_creating_vector() const
 template<class T, size_t D>
 inline bool line_like<T, D>::operator==(const line_like& other) const
 {
-    return std::equal(_ps.begin(), _ps.end(), other._ps.begin());
+    return std::equal(_ps.begin(), _ps.end(), other._ps.begin()) || std::equal(_ps.rbegin(), _ps.rend(), other._ps.begin());
 }
 
 template<class T, size_t D>
 inline bool line_like<T, D>::operator!=(const line_like& other) const
 {
-    return !std::equal(_ps.begin(), _ps.end(), other._ps.begin());
+    return !std::equal(_ps.begin(), _ps.end(), other._ps.begin()) && !std::equal(_ps.rbegin(), _ps.rend(), other._ps.begin());
 }
 
 MATH_NAMESPACE_END

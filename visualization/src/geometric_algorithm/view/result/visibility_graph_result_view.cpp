@@ -81,7 +81,7 @@ visibility_graph_result_view::visibility_graph_result_view(const std::vector<QPo
         }
         polys.push_back(p);
     }
-    auto vgraph = compute_visibility_graph(polys);
+    auto vgraph = create_visibility_graph(polys);
     QList<QLineF> lines;
 
     for (auto& v : vgraph.vertices())
@@ -90,7 +90,7 @@ visibility_graph_result_view::visibility_graph_result_view(const std::vector<QPo
         {
             auto& p1 = v.data();
             auto& p2 = vgraph.vertices()[e.to()].data();
-            lines.append(QLineF(QPointF(p1->p[0],p1->p[1]), QPointF(p2->p[0], p2->p[1])));
+            lines.append(QLineF(QPointF(p1->point[0],p1->point[1]), QPointF(p2->point[0], p2->point[1])));
         }
     }
 
@@ -98,7 +98,7 @@ visibility_graph_result_view::visibility_graph_result_view(const std::vector<QPo
         new algorithm_scene(
             { points_collection{ {},QColor() } },
             { lines_collection{ lines, QColor(0,0,255) } },
-            { polygons_collection{ /*QList<QPolygonF>::fromVector(QVector<QPolygonF>::fromStdVector(obstacles))*/{}, QColor(255, 0, 0) } }
+            { polygons_collection{ QList<QPolygonF>::fromVector(QVector<QPolygonF>::fromStdVector(obstacles)), QColor(255, 0, 0) } }
         )
     );
 }

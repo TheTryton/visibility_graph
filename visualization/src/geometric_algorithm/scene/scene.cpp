@@ -76,9 +76,20 @@ algorithm_scene::algorithm_scene(const QList<points_collection>& ptcolls, const 
 {
     for (auto& pti : ptcolls)
     {
-        for (auto& p : pti.points)
+        if (pti.indexed)
         {
-            addItem(new point_item(p, pti.color));
+            for (size_t i = 0; i < pti.points.size(); i++)
+            {
+                auto& p = pti.points[i];
+                addItem(new point_item(p, pti.color, pti.radius, i + 1));
+            }
+        }
+        else
+        {
+            for (auto& p : pti.points)
+            {
+                addItem(new point_item(p, pti.color, pti.radius));
+            }
         }
     }
 
@@ -86,7 +97,7 @@ algorithm_scene::algorithm_scene(const QList<points_collection>& ptcolls, const 
     {
         for (auto& l : lni.lines)
         {
-            addItem(new segment_item(l, lni.color));
+            addItem(new segment_item(l, lni.color, lni.width));
         }
     }
 

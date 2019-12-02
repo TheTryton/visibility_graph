@@ -22,12 +22,15 @@ struct points_collection
 {
     QList<QPointF> points;
     QColor color;
+    float radius = 5.0f;
+    bool indexed = false;
 };
 
 struct lines_collection
 {
     QList<QLineF> lines;
     QColor color;
+    float width = 0.0f;
 };
 
 struct polygons_collection

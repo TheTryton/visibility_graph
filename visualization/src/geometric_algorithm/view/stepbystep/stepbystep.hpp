@@ -18,7 +18,7 @@ private:
     QPushButton* _backward;
     QLabel* _step_description;
     std::vector<step> _steps;
-    size_t step_index = 0;
+    size_t _step_index;
 public:
     stepbystep_view(const std::vector<step>& steps, QWidget* parent = nullptr);
 };

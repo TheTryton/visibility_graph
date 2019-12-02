@@ -5,7 +5,7 @@
 MATH_NAMESPACE_BEGIN
 
 template<class T>
-constexpr T epsilon = std::numeric_limits<T>::epsilon();
+constexpr T epsilon = 1e-5;
 
 struct fill_t {};
 static fill_t fillv;

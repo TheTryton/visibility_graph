@@ -102,7 +102,7 @@ private:
 public:
     graph(size_t vertices_count = 0)
     {
-        vector<size_t> vids(vertices_count);
+        std::vector<size_t> vids(vertices_count);
         std::iota(vids.begin(), vids.end(), size_t(0));
 
         std::transform(vids.begin(), vids.end(), std::back_inserter(_vertices), [](size_t i) {return vertex(i); });
@@ -589,3 +589,201 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
     return vgraph;
 }
 
+template<class T>
+auto create_visibility_graph(const std::vector<polygon<T>>& obstacles)
+{
+    using std::shared_ptr;
+    using std::weak_ptr;
+    using std::make_shared;
+
+    struct vertex_info
+    {
+        point<T, 2> point;
+        size_t obstacle_index;
+        weak_ptr<vertex_info> prev_vertex;
+        weak_ptr<vertex_info> next_vertex;
+    };
+
+    std::vector<shared_ptr<vertex_info>> G;
+
+    for (size_t obstacle_index = 0; obstacle_index < obstacles.size(); obstacle_index++)
+    {
+        std::vector<shared_ptr<vertex_info>> obstacle_vertices;
+        auto& obstacle = obstacles[obstacle_index];
+        for (auto& vertex : obstacle)
+        {
+            obstacle_vertices.push_back(
+                shared_ptr<vertex_info>(new vertex_info{
+                    vertex,
+                    obstacle_index,
+                    weak_ptr<vertex_info>(),
+                    weak_ptr<vertex_info>()
+                })
+            );
+        }
+
+        for (size_t vertex_index = 0; vertex_index < obstacle.size(); vertex_index++)
+        {
+            auto prev_vertex_index = vertex_index == 0 ? obstacle.size() - 1 : vertex_index - 1;
+            auto next_vertex_index = (vertex_index + 1) % obstacle.size();
+            obstacle_vertices[vertex_index]->prev_vertex = obstacle_vertices[prev_vertex_index];
+            obstacle_vertices[vertex_index]->next_vertex = obstacle_vertices[next_vertex_index];
+        }
+        G.insert(G.begin(), obstacle_vertices.begin(), obstacle_vertices.end());
+    }
+
+    visibility_graph<shared_ptr<vertex_info>> VG{ G.begin(), G.end()};
+
+    auto angle = [](const auto& center, const auto& point) -> T {
+        auto dx = point[0] - center[0];
+        auto dy = point[1] - center[1];
+        if (std::abs(dx) < epsilon<T>)
+        {
+            if (dy < 0)
+            {
+                return M_PI * 3 / 2;
+            }
+            else
+            {
+                return M_PI / 2;
+            }
+        }
+        if (std::abs(dy) < epsilon<T>)
+        {
+            if (dx < 0)
+            {
+                return M_PI;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        if (dx < 0)
+        {
+            return M_PI + atan(dy / dx);
+        }
+        if (dy < 0)
+        {
+            return 2 * M_PI + atan(dy / dx);
+        }
+        return atan(dy / dx);
+    };
+
+    auto visible_vertices = [&](const auto& p)
+    {
+        using std::sort;
+
+        sort(G.begin(), G.end(), [&](const auto& l, const auto& r) {
+            auto anglel = angle(p->point, l->point);
+            auto angler = angle(p->point, r->point);
+            if (anglel < angler) return true;
+            if (anglel > angler) return false;
+            return (l->point - p->point).length() < (r->point - p->point).length();
+            });
+
+        ray<T, 2> rotational_sweepline{ point<T,2>{ {0,0} }, point<T,2>{ {std::numeric_limits<T>::max(),0} } };
+
+        auto tree_comparator = [&](const auto& l, const auto& r)
+        {
+            auto intersectl = intersection(rotational_sweepline, l);
+            auto intersectr = intersection(rotational_sweepline, r);
+            auto shifted_intersectl = *intersectl;// +l.unit_creating_vector() * epsilon<T>;
+            auto shifted_intersectr = *intersectr;// +r.unit_creating_vector() * epsilon<T>;
+            return (shifted_intersectl - p->point).length() < (shifted_intersectr - p->point).length();
+        };
+
+        using std::set;
+
+        set<segment<T, 2>, decltype(tree_comparator)> open_edges = set<segment<T, 2>, decltype(tree_comparator)>(tree_comparator);
+
+        for (auto& obstacle : obstacles)
+        {
+            for (size_t vertex_index = 0; vertex_index < obstacle.size(); vertex_index++)
+            {
+                auto& p1 = obstacle[vertex_index];
+                auto& p2 = obstacle[(vertex_index + 1) % obstacle.size()];
+                segment<T, 2> edge{ p1,p2 };
+
+                if (auto intersection_point = intersection(rotational_sweepline, edge))
+                {
+                    if (get_side_of_line(rotational_sweepline, p1) != side_of_line::right)
+                    {
+                        open_edges.insert(edge);
+                    }
+                    else
+                    {
+                        open_edges.insert(segment<T, 2>{p2, p1});
+                    }
+                }
+            }
+        }
+
+        using std::pair;
+        std::vector<pair<shared_ptr<vertex_info>,size_t>> W;
+
+        for (size_t i = 0; i < VG.vertices().size(); i++)
+        {
+            auto& w = VG.vertices()[i];
+            if (p->point == w.data()->point)
+                continue;
+            rotational_sweepline = ray<T, 2>(p->point, w.data()->point);
+
+            auto visible = [&](const auto& w) {
+                auto pw = segment<T, 2>(p->point, w.data()->point);
+                if (open_edges.empty())
+                {
+                    return true;
+                }
+                else if (!intersection(*open_edges.begin(), pw))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            };
+            if (visible(w))
+            {
+                W.push_back(std::make_pair(w.data(),i));
+            }
+
+            auto& prevv = w.data()->prev_vertex.lock()->point;
+            auto& nextv = w.data()->next_vertex.lock()->point;
+
+            if (get_side_of_line(rotational_sweepline, nextv) == side_of_line::right)
+            {
+                open_edges.insert(segment<T, 2>{w.data()->point, nextv});
+            }
+
+            if (get_side_of_line(rotational_sweepline, prevv) == side_of_line::right)
+            {
+                open_edges.insert(segment<T, 2>{w.data()->point, prevv});
+            }
+
+            if (get_side_of_line(rotational_sweepline, nextv) == side_of_line::left)
+            {
+                open_edges.erase(segment<T, 2>{nextv, w.data()->point});
+            }
+
+            if (get_side_of_line(rotational_sweepline, prevv) == side_of_line::left)
+            {
+                open_edges.erase(segment<T, 2>{prevv, w.data()->point});
+            }
+        }
+
+        return W;
+    };
+
+    for (auto& v : VG.vertices())
+    {
+        auto W = visible_vertices(v.data());
+        for (auto& w : W)
+        {
+            VG.add_directed_edge(v.id(), w.second);
+        }
+    }
+
+    return VG;
+}
