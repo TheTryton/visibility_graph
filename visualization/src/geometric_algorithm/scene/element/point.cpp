@@ -24,7 +24,10 @@ QPainterPath get_path(const QPointF& point, float radius, size_t index)
 {
     QPainterPath path;
     path.addEllipse(point, radius, radius);
-    path.addText(point + QPointF(radius, -radius), QFont(), QString::number(index));
+    if (index != 0)
+    {
+        path.addEllipse(point, radius + 12, radius + 12);
+    }
     return path;
 }
 

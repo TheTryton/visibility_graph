@@ -21,7 +21,18 @@ side_of_line get_side_of_line(const line_like<T, 2>& l, const point<T, 2>& point
 
     auto v = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 
-    return v < 0.0f ? side_of_line::left : (v > 0.0f ? side_of_line::right : side_of_line::on);
+    if (std::abs(v) < epsilon<T>)
+    {
+        return side_of_line::on;
+    }
+    else if (v < -epsilon<T>)
+    {
+        return side_of_line::left;
+    }
+    else
+    {
+        return side_of_line::right;
+    }
 }
 
 template<class T>
@@ -31,16 +42,16 @@ std::optional<point<T, 2>> intersection(const line_like<T, 2>& l1, const line_li
     auto v1 = l1.creating_vector();
     auto v2 = l2.creating_vector();
 
-    float W = v1[0] * v2[1] - v1[1] * v2[0];
-    if (std::abs(W) < std::numeric_limits<float>::epsilon())
+    T W = - v1[0] * v2[1] + v1[1] * v2[0];
+    if (std::abs(W) < std::numeric_limits<T>::epsilon())
     {
         return std::nullopt;
     }
-    float Wt = p2p1[0] * v2[1] - p2p1[1] * v2[0];
-    float Ws = v1[1] * p2p1[0] - v1[0] * p2p1[1];
+    T Wt = -p2p1[0] * v2[1] + p2p1[1] * v2[0];
+    T Ws = v1[0] * p2p1[1] - v1[1] * p2p1[0];
 
-    float t = Wt / W;
-    float s = Ws / W;
+    T t = Wt / W;
+    T s = Ws / W;
 
     if (!l1.algebraically_inside(t))
     {
@@ -59,15 +70,15 @@ template<class T, size_t D>
 std::optional<point<T, D>> projection(const point<T, D>& p, const line_like<T, D>& l)
 {
     auto v1 = l.creating_vector();
-    auto ptp1 = line[0] - p;
+    auto ptp1 = l[0] - p;
     auto t = -dot_product(ptp1, v1) / dot_product(v1, v1);
 
-    if (!l1.algebraically_inside(t))
+    if (!l.algebraically_inside(t))
     {
         return std::nullopt;
     }
 
-    return v1 * t + line[0];
+    return v1 * t + l[0];
 }
 
 template<class T, size_t D>

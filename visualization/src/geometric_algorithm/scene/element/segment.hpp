@@ -8,8 +8,9 @@ private:
     QLineF _segment;
     QColor _color;
     float _width;
+    size_t _index;
 public:
-    segment_item(const QLineF& segment, const QColor& color = QColor(0, 255, 0), float width = 1.0f, QGraphicsItem* parent = nullptr);
+    segment_item(const QLineF& segment, const QColor& color = QColor(0, 255, 0), float width = 1.0f, size_t index = 0, QGraphicsItem* parent = nullptr);
 public:
     QLineF&                 get_segment();
     QColor&                 get_color();

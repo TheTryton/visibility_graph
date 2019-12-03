@@ -28,7 +28,7 @@ void polygon_input_view::mousePressEvent(QMouseEvent* event)
         if (auto poly = dynamic_cast<polygon_item*>(itemAt(event->pos())))
         {
             QMenu menu;
-            menu.addAction("Remove polygon", [=, this]() {scene()->removeItem(poly); });
+            menu.addAction("Remove polygon", [&]() {scene()->removeItem(poly); });
             menu.exec(event->globalPos());
         }
         else

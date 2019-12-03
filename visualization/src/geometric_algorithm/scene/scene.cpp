@@ -95,9 +95,20 @@ algorithm_scene::algorithm_scene(const QList<points_collection>& ptcolls, const 
 
     for (auto& lni : lcolls)
     {
-        for (auto& l : lni.lines)
+        if (lni.indexed)
         {
-            addItem(new segment_item(l, lni.color, lni.width));
+            for (size_t i = 0; i < lni.lines.size(); i++)
+            {
+                auto& l = lni.lines[i];
+                addItem(new segment_item(l, lni.color, lni.width, i + 1));
+            }
+        }
+        else
+        {
+            for (auto& l : lni.lines)
+            {
+                addItem(new segment_item(l, lni.color, lni.width));
+            }
         }
     }
 

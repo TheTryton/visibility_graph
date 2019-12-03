@@ -59,7 +59,7 @@ inline ray<T, D> ray<T, D>::operator-(const vector<T, D>& other) const
 template<class T, size_t D>
 inline bool ray<T, D>::algebraically_inside(const T& coefficent) const
 {
-    return coefficent > 0;
+    return coefficent >= 0;
 }
 
 template<class T, size_t D>

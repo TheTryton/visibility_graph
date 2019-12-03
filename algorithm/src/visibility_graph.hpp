@@ -285,15 +285,12 @@ bool visible(const vertex_data<T>& w, const segment<T, 2>& pw, const vertex_data
 template<class T>
 T clockwise_angle(const point<T, 2>& p1, const point<T, 2>& p2, const point<T, 2>& p3)
 {
-    T dirp2p1 = std::atan2(p1[1] - p2[1], p1[0] - p2[0]);
-    T dirp2p3 = std::atan2(p3[1] - p2[1], p3[0] - p2[0]);
-    T anglep1p2p3 = dirp2p1 - dirp2p3;
-
-    const T pi = std::acos(T(-1));
-    if (anglep1p2p3 > pi) anglep1p2p3 -= 2 * pi;
-    else if (anglep1p2p3 < -pi) anglep1p2p3 += 2 * pi;
-
-    return anglep1p2p3 + pi;
+    auto v1 = p1 - p2;
+    auto v2 = p3 - p2;
+    
+    auto dot = v1.dot(v2);
+    auto det = v1[0] * v2[1] - v1[1] * v2[0];
+    return atan2(det, dot);
 }
 
 template<class T, class VT>

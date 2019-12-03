@@ -23,22 +23,29 @@ stepbystep_view::stepbystep_view(const std::vector<step>& steps, QWidget* parent
     font.setPointSize(16);
     _step_description->setFont(font);
     _step_description->setWordWrap(true);
-
+    _slider = new QSlider(Qt::Orientation::Horizontal);
+    root->addWidget(_slider);
+    _slider->setMaximum(_steps.size() - 1);
+    _slider->setMinimum(0);
     _step_index = 0;
     if (!_steps.empty())
     {
-        _step_view->setScene(steps[_step_index].scene);
-        _step_description->setText(steps[_step_index].description);
+        _step_view->setScene(_steps[_step_index].scene);
+        _step_description->setText(_steps[_step_index].description);
     }
 
     QObject::connect(_forward, &QPushButton::released, this, [&]() {
         _step_index = (_step_index + 1)% _steps.size();
-        _step_view->setScene(_steps[_step_index].scene);
-        _step_description->setText(_steps[_step_index].description);
+        _slider->setValue(_step_index);
         });
 
     QObject::connect(_backward, &QPushButton::released, this, [&]() {
         _step_index = _step_index == 0 ? _steps.size() - 1 : _step_index - 1;
+        _slider->setValue(_step_index);
+        });
+
+    QObject::connect(_slider, &QSlider::valueChanged, this, [&](int s) {
+        _step_index = s;
         _step_view->setScene(_steps[_step_index].scene);
         _step_description->setText(_steps[_step_index].description);
         });

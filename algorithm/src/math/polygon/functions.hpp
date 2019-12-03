@@ -41,9 +41,30 @@ polygon_point_classification contains(const polygon<T>& poly, const point<T, 2>&
 }
 
 template<class T>
-bool intersects_interior(const segment<T, 2>& s, const polygon<T>& p)
+bool intersects_interior(const segment<T, 2>& s, const polygon<T>& poly)
 {
-    return contains(p, s[0] + (s[1] - s[0]) / 2) == polygon_point_classification::inside;
+    size_t count_intersections = 0;
+
+    for (size_t i = 0; i < poly.size(); i++)
+    {
+        auto edge = segment<T, 2>(poly[i], poly[(i + 1) % poly.size()]);
+
+        if (get_side_of_line(edge, s[0]) == side_of_line::on ||
+            get_side_of_line(edge, s[1]) == side_of_line::on)
+        {
+            continue;
+        }
+
+        auto intersection_point_opt = intersection(s, edge);
+        if (intersection_point_opt)
+        {
+            auto& intersection_point = *intersection_point_opt;
+
+            count_intersections++;
+        }
+    }
+
+    return count_intersections > 0;
 }
 
 MATH_NAMESPACE_END

@@ -31,6 +31,7 @@ struct lines_collection
     QList<QLineF> lines;
     QColor color;
     float width = 0.0f;
+    bool indexed = false;
 };
 
 struct polygons_collection

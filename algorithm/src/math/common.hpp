@@ -5,7 +5,7 @@
 MATH_NAMESPACE_BEGIN
 
 template<class T>
-constexpr T epsilon = 1e-5;
+constexpr T epsilon = T(1e-5);
 
 struct fill_t {};
 static fill_t fillv;

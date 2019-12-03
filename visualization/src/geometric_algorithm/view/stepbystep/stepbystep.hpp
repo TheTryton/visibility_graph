@@ -17,6 +17,7 @@ private:
     QPushButton* _forward;
     QPushButton* _backward;
     QLabel* _step_description;
+    QSlider* _slider;
     std::vector<step> _steps;
     size_t _step_index;
 public:
