@@ -21,6 +21,14 @@ QList<QPolygonF> polygon_input_view::get_polygons() const
     return polygons;
 }
 
+void polygon_input_view::clear()
+{
+    _constructed_edge = std::nullopt;
+    _constructed_edges.clear();
+    _near_circle = nullptr;
+    scene()->clear();
+}
+
 void polygon_input_view::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::MouseButton::RightButton)

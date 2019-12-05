@@ -15,9 +15,11 @@ enum class polygon_point_classification
 template<class T>
 polygon_point_classification contains(const polygon<T>& poly, const point<T, 2>& p)
 {
-    auto ray_from_point = ray<T, 2>(p, p + vector<T, 2>({ 1,0 }));
+    auto ray_from_point1 = ray<T, 2>(p, p + vector<T, 2>({ 1,0 }));
+    auto ray_from_point2 = ray<T, 2>(p, p + vector<T, 2>({ 0,1 }));
 
-    size_t count_intersections = 0;
+    size_t count_intersections1 = 0;
+    size_t count_intersections2 = 0;
 
     for (size_t i = 0; i < poly.size(); i++)
     {
@@ -28,16 +30,21 @@ polygon_point_classification contains(const polygon<T>& poly, const point<T, 2>&
             return polygon_point_classification::on_edge;
         }
 
-        auto intersection_point_opt = intersection(ray_from_point, edge);
-        if (intersection_point_opt)
-        {
-            auto& intersection_point = *intersection_point_opt;
+        auto intersection_point_opt1 = intersection(ray_from_point1, edge);
+        auto intersection_point_opt2 = intersection(ray_from_point2, edge);
 
-            count_intersections++;
+        if (intersection_point_opt1)
+        {
+            count_intersections1++;
+        }
+
+        if (intersection_point_opt2)
+        {
+            count_intersections2++;
         }
     }
 
-    return count_intersections % 2 ? polygon_point_classification::inside : polygon_point_classification::outside;
+    return count_intersections1 % 2 == 1 || count_intersections2 % 2 == 1 ? polygon_point_classification::inside : polygon_point_classification::outside;
 }
 
 template<class T>

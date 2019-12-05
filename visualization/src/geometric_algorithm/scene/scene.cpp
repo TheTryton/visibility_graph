@@ -72,51 +72,66 @@ algorithm_input_scene::algorithm_input_scene(QObject* parent) :
 }
 
 algorithm_scene::algorithm_scene(const QList<points_collection>& ptcolls, const QList<lines_collection>& lcolls, const QList<polygons_collection>& plcolls, QObject* parent) :
-    algorithm_scene_base(parent)
+    _ptcolls(ptcolls),
+    _lcolls(lcolls),
+    _plcolls(plcolls)
 {
-    for (auto& pti : ptcolls)
+}
+
+void algorithm_scene::set_scene(QGraphicsView* view)
+{
+    if (view->scene())
+    {
+        view->scene()->clear();
+    }
+    else
+    {
+        view->setScene(new algorithm_scene_base);
+    }
+
+    for (auto& pti : _ptcolls)
     {
         if (pti.indexed)
         {
             for (size_t i = 0; i < pti.points.size(); i++)
             {
                 auto& p = pti.points[i];
-                addItem(new point_item(p, pti.color, pti.radius, i + 1));
+                view->scene()->addItem(new point_item(p, pti.color, pti.radius, i + 1));
             }
         }
         else
         {
             for (auto& p : pti.points)
             {
-                addItem(new point_item(p, pti.color, pti.radius));
+                view->scene()->addItem(new point_item(p, pti.color, pti.radius));
             }
         }
     }
 
-    for (auto& lni : lcolls)
+    for (auto& lni : _lcolls)
     {
         if (lni.indexed)
         {
             for (size_t i = 0; i < lni.lines.size(); i++)
             {
                 auto& l = lni.lines[i];
-                addItem(new segment_item(l, lni.color, lni.width, i + 1));
+                view->scene()->addItem(new segment_item(l, lni.color, lni.width, i + 1));
             }
         }
         else
         {
             for (auto& l : lni.lines)
             {
-                addItem(new segment_item(l, lni.color, lni.width));
+                view->scene()->addItem(new segment_item(l, lni.color, lni.width));
             }
         }
     }
 
-    for (auto& pli : plcolls)
+    for (auto& pli : _plcolls)
     {
         for (auto& p : pli.polygons)
         {
-            addItem(new polygon_item(p, pli.color));
+            view->scene()->addItem(new polygon_item(p, pli.color));
         }
     }
 }

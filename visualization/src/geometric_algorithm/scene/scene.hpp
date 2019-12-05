@@ -40,9 +40,14 @@ struct polygons_collection
     QColor color;
 };
 
-class algorithm_scene : public algorithm_scene_base
+class algorithm_scene
 {
-    Q_OBJECT
+private:
+    QList<points_collection> _ptcolls;
+    QList<lines_collection> _lcolls;
+    QList<polygons_collection> _plcolls;
 public:
     algorithm_scene(const QList<points_collection>& ptcolls, const QList<lines_collection>& lcolls, const QList<polygons_collection>& plcolls, QObject* parent = nullptr);
+public:
+    void set_scene(QGraphicsView* view);
 };

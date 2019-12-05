@@ -18,6 +18,7 @@ public:
     polygon_input_view(QWidget* parent = nullptr);
 public:
     QList<QPolygonF> get_polygons() const;
+    void clear();
 protected:
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void mouseMoveEvent(QMouseEvent* event) override;
