@@ -25,7 +25,7 @@ stepbystep_view::stepbystep_view(const std::vector<step>& steps, QWidget* parent
     _backward->setFont(font);
     _slider = new QSlider(Qt::Orientation::Horizontal);
     root->addWidget(_slider);
-    _slider->setMaximum(_steps.size() - 1);
+    _slider->setMaximum(static_cast<int>(_steps.size() - 1));
     _slider->setMinimum(0);
     _step_index = 0;
     if (!_steps.empty())
@@ -38,7 +38,7 @@ stepbystep_view::stepbystep_view(const std::vector<step>& steps, QWidget* parent
         if (!_steps.empty())
         {
             _step_index = (_step_index + 1) % _steps.size();
-            _slider->setValue(_step_index);
+            _slider->setValue(static_cast<int>(_step_index));
         }
         });
 
@@ -46,7 +46,7 @@ stepbystep_view::stepbystep_view(const std::vector<step>& steps, QWidget* parent
         if (!_steps.empty())
         {
             _step_index = _step_index == 0 ? _steps.size() - 1 : _step_index - 1;
-            _slider->setValue(_step_index);
+            _slider->setValue(static_cast<int>(_step_index));
         }
         });
 
@@ -62,7 +62,7 @@ stepbystep_view::stepbystep_view(const std::vector<step>& steps, QWidget* parent
 void stepbystep_view::set_steps(const std::vector<step>& steps)
 {
     _steps = steps;
-    _slider->setMaximum(_steps.size() - 1);
+    _slider->setMaximum(static_cast<int>(_steps.size() - 1));
     _slider->setMinimum(0);
     _step_index = 0;
     if (!_steps.empty())

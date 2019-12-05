@@ -122,7 +122,7 @@ auto compute_visibility_graph_visualized(const std::vector<polygon<T>>& obstacle
         ray<T, 2> rotational_sweepline{ p->point, point<T,2>{ {p->point[0] + T(1),p->point[1]} } };
         rotational_sweepline[1] += rotational_sweepline.unit_creating_vector() * 10000;
 
-        auto compare_f = [&](const auto& l, const auto& r)
+        auto sorting_comparator = [&](const auto& l, const auto& r)
         {
             auto pl = line<T, 2>(p->point, l->point);
             auto pr = line<T, 2>(p->point, r->point);
@@ -236,10 +236,12 @@ auto compute_visibility_graph_visualized(const std::vector<polygon<T>>& obstacle
                     return true;
                 }
             }
+
+            return false;
         };
 
         std::swap(*std::find(G.begin(), G.end(), p), *G.rbegin());
-        sort(G.begin(), G.end() - 1, compare_f);
+        sort(G.begin(), G.end() - 1, sorting_comparator);
 
         points_collection sorted_pts;
         sorted_pts.color = QColor(0, 0, 255);

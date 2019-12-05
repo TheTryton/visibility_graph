@@ -15,6 +15,8 @@ enum class polygon_point_classification
 template<class T>
 polygon_point_classification contains(const polygon<T>& poly, const point<T, 2>& p)
 {
+    // https://en.wikipedia.org/wiki/Point_in_polygon
+
     auto ray_from_point1 = ray<T, 2>(p, p + vector<T, 2>({ 1,0 }));
     auto ray_from_point2 = ray<T, 2>(p, p + vector<T, 2>({ 0,1 }));
 
@@ -50,6 +52,11 @@ polygon_point_classification contains(const polygon<T>& poly, const point<T, 2>&
 template<class T>
 bool intersects_interior(const segment<T, 2>& s, const polygon<T>& poly)
 {
+    // derived from https://en.wikipedia.org/wiki/Point_in_polygon
+    // however this algorithm is not 100% accurate because of imposibility
+    // to reliably check if given segment is contained within polygon when
+    // both of point of the segment are on polygon edges
+
     size_t count_intersections = 0;
 
     for (size_t i = 0; i < poly.size(); i++)

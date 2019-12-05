@@ -7,7 +7,13 @@ int main(int argc, char** argv)
     interactive_view view;
     view.show();
 
-	application.exec();
+    application.exec();
 
-	return 0;
+    return 0;
+}
+
+INT WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    PSTR lpCmdLine, INT nCmdShow)
+{
+    return main(0, nullptr);
 }

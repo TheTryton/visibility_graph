@@ -1,7 +1,6 @@
 #pragma once
 
 #include <math/math.hpp>
-#include "skip_list.hpp"
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -10,9 +9,10 @@
 
 #include <exception>
 
-using namespace data_structures;
 using namespace math;
 
+// graph structure enclosing
+// adjacency list representation
 template<class V, class E>
 class graph
 {
@@ -220,6 +220,7 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
 
     std::vector<shared_ptr<vertex_info>> G;
 
+    // copy all vertices of obstacles to single list G
     for (size_t obstacle_index = 0; obstacle_index < obstacles.size(); obstacle_index++)
     {
         std::vector<shared_ptr<vertex_info>> obstacle_vertices;
@@ -252,18 +253,26 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
         G[i]->graph_vertex_index = i;
     }
 
+    // initialize graph where V is the set of all vertices of the polygons in obstacles
     visibility_graph<shared_ptr<vertex_info>> VG{ G.begin(), G.end() };
 
+    // if there are no obstacles then return empty graph
     if (VG.vertices().empty())
     {
         return VG;
     }
 
+    // subfunction visible vertices
+    // input p: point from which we will be checking
+    // visibility of other points
+    // output: list of visible vertices
     auto visible_vertices = [&](const auto& p)
     {
         ray<T, 2> rotational_sweepline{ p->point, point<T,2>{ {p->point[0] + T(1),p->point[1]} } };
-        rotational_sweepline[1] += rotational_sweepline.unit_creating_vector() * 10000;
 
+        // sorting comparator
+        // implemented only with geometry predicates in
+        // order to mitigate floating point errors
         auto sorting_comparator = [&](const auto& l, const auto& r)
         {
             auto pl = line<T, 2>(p->point, l->point);
@@ -378,11 +387,17 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
                     return true;
                 }
             }
+
+            return false;
         };
 
+        // move current point p to the end of polygon vertices
         swap(*find(G.begin(), G.end(), p), *G.rbegin());
+        // sort all polygon vertices except current point p
+        // clockwisely
         sort(G.begin(), G.end() - 1, sorting_comparator);
 
+        // balanced search tree T comparator
         auto tree_comparator = [&](const auto& l, const auto& r)
         {
             if (l == r)
@@ -433,6 +448,9 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
                 }
             }
 
+            // case when both points are on the sweep line 
+            // happens only when we are adding/removing edges from
+            // tree
             if (on_sweep == 2)
             {
                 auto same_pointl = l[1];
@@ -453,6 +471,10 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
 
                 if (same_pointl == same_pointr)
                 {
+                    // line that is 'closed' to sweep line should be before the other
+                    // this is done by checking whether point from the left edge that
+                    // is not on sweep line is to the right from line from other edge
+                    // point on the sweepline to the point not on the sweepline
                     return get_side_of_line(line<T, 2>(same_pointl, outpointr), outpointl) == side_of_line::right;
                 }
             }
@@ -463,11 +485,17 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
             auto distl = vl.dot(vl);
             auto distr = vr.dot(vr);
 
-            return distl < distr;
+            // sort edges according to the distance from point p of the intersection point 
+            // between sweepline and edge
+            return distl < distr; 
         };
 
+        // balanced search tree T maintaining intersection order between contained edges
+        // and rotational sweepline
         set<segment<T, 2>, decltype(tree_comparator)> open_edges = set<segment<T, 2>, decltype(tree_comparator)>(tree_comparator);
 
+        // insert all edges that intersection sweepline (currently ray pointing from p to x positive infinity)
+        // into balanced search tree T
         for (auto& obstacle : obstacles)
         {
             for (size_t vertex_index = 0; vertex_index < obstacle.size(); vertex_index++)
@@ -517,10 +545,11 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
             auto& w = G[i];
 
             rotational_sweepline[1] = w->point;
-            rotational_sweepline[1] += rotational_sweepline.unit_creating_vector() * 10000;
-            
+
             auto& prevv = w->prev_vertex.lock()->point;
             auto& nextv = w->next_vertex.lock()->point;
+
+            // removal of edges that are left to the sweep line
 
             if (get_side_of_line(rotational_sweepline, prevv) == side_of_line::left)
             {
@@ -554,11 +583,15 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
                 }
             }
 
+            // subfunction visible
+            // input: point w which is checked if is visible from point p
+            // output: true if visible/false if not visible
             auto visible = [&](const auto& w) {
                 auto pw = segment<T, 2>(p->point, w->point);
                 auto p1s = pw[0] + pw.unit_creating_vector() * 0.01;
                 auto p2s = pw[1] - pw.unit_creating_vector() * 0.01;
 
+                // if segment pw intersects interior of the obstacle of which w is a vertex
                 if (intersects_interior(pw, obstacles[w->obstacle_index]) ||
                     contains(obstacles[w->obstacle_index], p1s) == polygon_point_classification::inside ||
                     contains(obstacles[w->obstacle_index], p2s) == polygon_point_classification::inside)
@@ -566,14 +599,18 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
                     return false;
                 }
 
+                // if prev doesn't exist or prev is not on segment pw
                 if (!prev || !contains(pw, prev->point))
                 {
+                    // if there are no edges in balanced search tree T
                     if (open_edges.empty())
                     {
                         return true;
                     }
                     else
                     {
+                        // check if segment pw intersects leftmost edge in balanced search tree T
+
                         auto intpt = intersection(*open_edges.begin(), pw);
 
                         if (!intpt || *intpt == w->point)
@@ -587,10 +624,13 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
                     }
                 }
 
+                // if prev is not visible
                 if (!prev_visible)
                 {
                     return false;
                 }
+
+                // search in T for an edge e that intersects segment prev w
 
                 auto lb_v = segment<T, 2>(prev->point, prev->point +
                     vector<T, 2>({ rotational_sweepline[1][1], -rotational_sweepline[1][0] }));
@@ -610,13 +650,16 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
 
                 return lb != ub;
             };
+            
             bool w_visible = false;
-
             if (visible(w))
             {
-                w_visible = true;
+                // if visible add to visible vertices from p list
                 W.push_back(w);
+                w_visible = true;
             }
+
+            // insert edges that are to the right of the sweep line
 
             if (get_side_of_line(rotational_sweepline, nextv) == side_of_line::right)
             {
@@ -635,11 +678,12 @@ auto compute_visibility_graph(const std::vector<polygon<T>>& obstacles)
         return W;
     };
 
+    // for all vertices v in VG
     for (auto& v : VG.vertices())
     {
         auto W = visible_vertices(v.data());
 
-        for (auto& w : W)
+        for (auto& w : W) // for every visible vertex add edge (v, w) to graph VG 
         {
             VG.add_directed_edge(v.id(), w->graph_vertex_index);
         }
