@@ -1,2 +1,2 @@
 # visibility_graph
-Geometric algorithms project
+Visibility graph algorithm with O(n^2 log n) complexity with visualization
