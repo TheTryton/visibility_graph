@@ -25,8 +25,8 @@ inline line<T, D>::line(line_like<T, D>&& other) :
 template<class T, size_t D>
 inline line<T, D>& line<T, D>::operator+=(const vector<T, D>& other)
 {
-    _ps[0] += other;
-    _ps[1] += other;
+    line_like<T, D>::_ps[0] += other;
+    line_like<T, D>::_ps[1] += other;
 
     return *this;
 }
@@ -34,8 +34,8 @@ inline line<T, D>& line<T, D>::operator+=(const vector<T, D>& other)
 template<class T, size_t D>
 inline line<T, D>& line<T, D>::operator-=(const vector<T, D>& other)
 {
-    _ps[0] -= other;
-    _ps[1] -= other;
+    line_like<T, D>::_ps[0] -= other;
+    line_like<T, D>::_ps[1] -= other;
 
     return *this;
 }

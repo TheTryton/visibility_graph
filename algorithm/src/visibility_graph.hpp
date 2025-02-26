@@ -111,8 +111,7 @@ public:
     template<class It>
     graph(size_t vertices_count, It data_it)
     {
-        size_t i = 0;
-        for (size_i = 0; i < vertices_count; i++)
+        for (size_t i = 0; i < vertices_count; i++)
         {
             _vertices.push_back(vertex(i, *data_it++));
         }
@@ -134,9 +133,9 @@ public:
         auto after_removed_vertex = _vertices.erase(_vertices.begin() + vertex_id);
         std::for_each(after_removed_vertex, _vertices.end(), [](vertex& v) {v._id = v._id - 1; });
     }
-    void remove_vertex(const vertex& vertex)
+    void remove_vertex(const vertex& vert)
     {
-        auto vertex_to_remove = std::find(_vertices.begin(), _vertices.end(), vertex);
+        auto vertex_to_remove = std::find(_vertices.begin(), _vertices.end(), vert);
         auto after_removed_vertex = _vertices.erase(vertex_to_remove);
         std::for_each(after_removed_vertex, _vertices.end(), [](vertex& v) {v._id = v._id - 1; });
     }

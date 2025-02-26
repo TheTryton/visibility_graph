@@ -34,10 +34,10 @@ public:
     auto& operator[](size_t i);
     auto& operator[](size_t i) const;
 
-    auto p1();
-    auto p1() const;
-    auto p2();
-    auto p2() const;
+    decltype(auto) p1();
+    decltype(auto) p1() const;
+    decltype(auto) p2();
+    decltype(auto) p2() const;
 public:
     vector<T, D> creating_vector() const;
     vector<T, D> unit_creating_vector() const;

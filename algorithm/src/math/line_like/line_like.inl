@@ -67,25 +67,25 @@ inline auto& line_like<T, D>::operator[](size_t i) const
 }
 
 template<class T, size_t D>
-inline auto line_like<T, D>::p1()
+inline decltype(auto) line_like<T, D>::p1()
 {
     return _ps[0];
 }
 
 template<class T, size_t D>
-inline auto line_like<T, D>::p1() const
+inline decltype(auto) line_like<T, D>::p1() const
 {
     return _ps[0];
 }
 
 template<class T, size_t D>
-inline auto line_like<T, D>::p2()
+inline decltype(auto) line_like<T, D>::p2()
 {
     return _ps[1];
 }
 
 template<class T, size_t D>
-inline auto line_like<T, D>::p2() const
+inline decltype(auto) line_like<T, D>::p2() const
 {
     return _ps[1];
 }

@@ -48,7 +48,7 @@ visibility_graph_result_view::visibility_graph_result_view(const std::vector<QPo
     lc.width = 3.0f;
 
     polygons_collection plc;
-    plc.polygons = QList<QPolygonF>::fromVector(QVector<QPolygonF>::fromStdVector(obstacles));
+    plc.polygons = QList<QPolygonF>(std::begin(obstacles), std::end(obstacles));
     plc.color = QColor(255, 0, 0);
 
     auto scene = algorithm_scene(
@@ -100,7 +100,7 @@ void visibility_graph_result_view::set_obstacles(const std::vector<QPolygonF>& o
     lc.width = 3.0f;
 
     polygons_collection plc;
-    plc.polygons = QList<QPolygonF>::fromVector(QVector<QPolygonF>::fromStdVector(obstacles));
+    plc.polygons = QList<QPolygonF>(std::begin(obstacles), std::end(obstacles));
     plc.color = QColor(255, 0, 0);
 
     auto scene = algorithm_scene(
